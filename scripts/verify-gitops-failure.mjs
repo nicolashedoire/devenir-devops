@@ -50,17 +50,29 @@ function checkData(ns) {
 }
 function pvc(ns) { return json('get', 'pvc', 'data-taskboard-postgres-0', '-n', ns, '-o', 'json').metadata.uid; }
 // Le serveur Argo CD 3.5.3 termine lui-même une opération en plaçant cette phase.
-// La précondition resourceVersion empêche d'altérer une nouvelle opération concurrente.
+// Tester le SHA et la phase protège l'opération visée. La resourceVersion globale
+// change aussi lors de mises à jour de santé sans rapport : elle n'est pas un verrou.
 function terminateBadOperation() {
-  const current = app();
-  const state = current.status?.operationState;
-  if (!active(current) || state?.syncResult?.revision !== revisions.panne) return false;
-  kube('patch', 'application', appName, '-n', 'argocd', '--type=json', '-p', JSON.stringify([
-    { op: 'test', path: '/metadata/resourceVersion', value: current.metadata.resourceVersion },
-    { op: 'test', path: '/status/operationState/syncResult/revision', value: revisions.panne },
-    { op: 'replace', path: '/status/operationState/phase', value: 'Terminating' },
-  ]));
-  return true;
+  let lastError;
+  for (let attempt = 0; attempt < 5; attempt++) {
+    const current = app();
+    const state = current.status?.operationState;
+    if (!['Running', 'Terminating'].includes(state?.phase) || state?.syncResult?.revision !== revisions.panne) return false;
+    if (current.operation?.sync?.revision && current.operation.sync.revision !== revisions.panne) return false;
+    if (state.phase === 'Terminating') return true;
+    const changes = [
+      { op: 'test', path: '/status/operationState/syncResult/revision', value: revisions.panne },
+      { op: 'test', path: '/status/operationState/phase', value: 'Running' },
+    ];
+    if (current.operation?.sync?.revision) changes.push({ op: 'test', path: '/operation/sync/revision', value: revisions.panne });
+    changes.push({ op: 'replace', path: '/status/operationState/phase', value: 'Terminating' });
+    try {
+      kube('patch', 'application', appName, '-n', 'argocd', '--type=json', '-p', JSON.stringify(changes));
+      return true;
+    } catch (error) { lastError = error; }
+    // Relire avant toute reprise : une nouvelle opération saine n'est jamais terminée.
+  }
+  throw lastError;
 }
 async function reconcile(revision) {
   change(revision);

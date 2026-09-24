@@ -35,16 +35,20 @@ async function awaitEndpoints(count) {
 }
 function readFromPod(name, target) {
   return json('exec','-n',ns,name,'-c','api','--','node','--input-type=module','-e',
-    `try {const r=await fetch(${JSON.stringify(target)},{signal:AbortSignal.timeout(3000)});console.log(JSON.stringify({status:r.status,body:await r.json()}));}catch(e){console.log(JSON.stringify({status:null,error_type:e.name,error_code:e.cause?.code||e.code||null}));}`);
+    `let status=null;try {const r=await fetch(${JSON.stringify(target)},{signal:AbortSignal.timeout(3000)});status=r.status;console.log(JSON.stringify({status,body:await r.json()}));}catch(e){console.log(JSON.stringify({status,error_type:e.name,error_code:e.cause?.code||e.code||null}));}`);
 }
 async function awaitService(name, expectedStatus) {
   const deadline=Date.now()+30000;let last;
   while(Date.now()<deadline){
     last=readFromPod(name,'http://taskboard-api:3000/api/tasks');
-    if(last.status===expectedStatus)return last;
+    if(last.status===expectedStatus && (expectedStatus===null || !last.error_type))return last;
     await sleep(1000);
   }
-  throw Error(`Service non convergé : ${JSON.stringify({status:last?.status,error_type:last?.error_type,error_code:last?.error_code,endpoints:endpoints().length})}`);
+  const service=json('get','service','taskboard-api','-n',ns,'-o','json');
+  const destinations=endpoints();
+  const addresses=[`http://taskboard-api.${ns}.svc.cluster.local:3000/api/tasks`,`http://${service.spec.clusterIP}:3000/api/tasks`,...destinations.flatMap(e=>e.addresses||[]).map(a=>`http://${a}:3000/api/tasks`)];
+  const network=addresses.map(address=>{const r=readFromPod(name,address);return {address,status:r.status,error_type:r.error_type,error_code:r.error_code};});
+  throw Error(`Service non convergé : ${JSON.stringify({status:last?.status,error_type:last?.error_type,error_code:last?.error_code,endpoints:destinations.length,network})}`);
 }
 function checkWitness(name) {
   const response=readFromPod(name,`http://127.0.0.1:3000/api/tasks/${witness.id}`);
