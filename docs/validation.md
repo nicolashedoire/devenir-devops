@@ -100,7 +100,7 @@ Un contrôle Node local avec récepteur OTLP de test a vérifié séparément la
 
 ## Images publiées sur deux architectures
 
-Le workflow `images-multiarch.yml` a testé l’application, PostgreSQL, la persistance et la restauration sur des runners **AMD64 et ARM64 natifs**. Il transmet ensuite les images testées à la publication et assemble leurs digests sans reconstruire l’application. Les deux images de l’exercice de promotion sont accessibles publiquement :
+Le workflow `image-multiarch.yml` a testé l’application, PostgreSQL, la persistance et la restauration sur des runners **AMD64 et ARM64 natifs**. Il transmet ensuite les images testées à la publication et assemble leurs digests sans reconstruire l’application. Les deux images de l’exercice de promotion sont accessibles publiquement :
 
 | Image | Source | Preuve |
 |---|---|---|
@@ -138,3 +138,29 @@ La recette a ensuite généré et réellement livré l’offre avec l’image au
 ### Panne Helm et retour à la version connue
 
 La [recette étendue](https://github.com/nicolashedoire/devenir-devops/actions/runs/36010676439) a réussi sur `d9e60fa9b1991326f48dd6b4d3bfe01e298da14c`. Elle rejoue aussi les imports, remplacements, réconciliation et promotions décrits ci-dessus. Elle déploie volontairement un digest inexistant dans `taskboard-lab`, constate l’échec de Helm et le refus de téléchargement dans les états des conteneurs initiaux, puis revient à la révision précédente. L’image et les trois champs de la tâche sont vérifiés après le retour. Le rollback ne prétend pas restaurer un schéma SQL.
+
+
+## Passage lecteur des chapitres 01 à 10
+
+Les exercices ont été lus intégralement puis rejoués dans des copies isolées. La [recette finale du 24 septembre 2026](https://github.com/nicolashedoire/devenir-devops/actions/runs/36014246803), sur `e618d1bb7a281d08e218b95ce202d2ef42b835f5`, a réussi ses trois jobs Ubuntu 24.04 / Linux AMD64. Le script `scripts/verify-reader-foundations.sh` conserve les relevés dans les artefacts `lecteur-fondations-linux` (`linux.tsv`), `lecteur-fondations-docker` (`docker.tsv`) et `lecteur-fondations-infra` (`infra.tsv`), accompagnés des journaux et résultats détaillés.
+
+- Linux : refus des permissions puis correction, unité systemd utilisateur, effet distinct de daemon-reload et restart, changements de port, NGINX 200/404/502 puis rétablissement.
+- Docker : perte attendue de la mémoire au redémarrage, nouvelle image distincte d’un ancien conteneur, écoute interne corrigée, limites 1 CPU/256 Mio et racine en lecture seule ; PostgreSQL, témoin après remplacement, panne DB 200/503/503, restauration distincte de deux tâches et migration idempotente ; sonde CI au mauvais puis au bon port avec nettoyage dans les deux cas.
+- Infrastructure : installation contrôlée d’OpenTofu, validations et fournisseurs AWS simulés, cycle réel de création/dérive/réparation/retrait du seul fichier local. Aucun compte AWS ni déploiement cloud réel n’est validé par ce résultat.
+
+Le passage local macOS ARM64 / Node 24.19.0 a aussi exécuté les 18 tests applicatifs, le formulaire navigateur, les erreurs HTTP, le conflit Git avec abandon/résolution, les commits de correction et le revert, le test volontairement rouge puis rétabli, les permissions et le challenge OpenTofu avec changement de variables. Les exercices de conception ont reçu des réponses écrites comparées aux corrigés ; ils ne sont pas présentés comme des déploiements.
+
+Cette recette a fait corriger le message de collision de port du livre (`startup_failed`, le code système étant masqué), la distinction entre publication AMD64 et workflow multiarchitecture, et les attentes GET de démarrage. La [première tentative](https://github.com/nicolashedoire/devenir-devops/actions/runs/36013946820) avait révélé une connexion réinitialisée après `docker restart` que `--retry-connrefused` ne réessayait pas ; les sondes bornées utilisent maintenant `--retry-all-errors`. Cette répétition concerne des lectures, pas des créations de tâches. La recette ne constitue pas une nouvelle publication GHCR, une configuration SSO ni une validation AWS réelle.
+
+
+## Passage lecteur des chapitres 11 à 14
+
+La [recette complète du 24 septembre 2026](https://github.com/nicolashedoire/devenir-devops/actions/runs/36016914638) a réussi sur `efc8209f704184efcc83926e5d356b345ac8404f`, sous Ubuntu 24.04 / Linux AMD64. Elle rejoue les imports dans les trois namespaces, la conservation des données, les remplacements de Pods, la dérive corrigée par Argo, les promotions et les retours précédemment décrits. L’artefact `kubernetes-gitops` contient les résultats expurgés et `kubernetes-ci/revision.txt`.
+
+Le script `scripts/verify-reader-kubernetes.mjs` ajoute **onze contrôles correspondant aux manipulations du livre** : tunnel 3006 et témoin, remplacement de tous les Pods API, lecture des trois réplicas, remplacement d’un seul parmi trois, requests/limits exactes, mauvais sélecteur avec zéro destination et Pod encore lisible, restauration du Service, rendu Helm à trois et refus à cinq, échec d’image avec les options et le délai de 90 secondes du livre, rollback exact, puis retour final à deux réplicas avec le même PVC et le même témoin. Les onze cas ont réussi entre 15:02:13.861 et 15:04:35.494 UTC.
+
+Le script `scripts/verify-gitops-failure.mjs` exerce séparément la panne d’image **par GitOps**. Le hook de migration ne peut pas télécharger l’image (`database-ready`, `ErrImagePull`), tandis que les anciennes API conservent leur témoin. Après le commit de retour, la terminaison ciblée de l’opération bloquée et la nouvelle synchronisation rétablissent la référence connue. Le namespace production et les PVC restent inchangés, puis l’Application retrouve sa branche initiale. Cette expérience a réussi de 15:07:31.448 à 15:08:04.269 UTC ; elle n’est pas déduite du seul test Helm.
+
+La recette a fait corriger deux détails du parcours : Helm 4 exige une reprise explicite de propriété des champs volontairement modifiés avec kubectl (`--force-conflicts`, sans remplacement forcé), et la lecture d’un Service attend la convergence de ses destinations et de son trajet HTTP. Une version précédente du helper pouvait perdre le statut HTTP si le décodage JSON échouait ; le diagnostic conserve désormais statut, type et code d’erreur. Un ancien `status:null` ne prouve donc pas, à lui seul, une panne réseau.
+
+Le [registre Kubernetes détaillé](../deploy/validation.md) donne les identités des fixtures et les limites. Les commandes Git du challenge ont également été rejouées dans une copie et un dépôt distant **locaux** : deux commits de promotion distincts, puis annulation du seul second, état propre et recette conservée. La CI Argo lit séparément des commits publics préparés ; ces deux essais ne sont pas présentés comme une unique exécution fork/push public/Argo. Aucun cloud ni changement sur un cluster extérieur au laboratoire n’a été effectué.

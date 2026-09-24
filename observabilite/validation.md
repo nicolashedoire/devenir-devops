@@ -55,6 +55,24 @@ Le Collector ciblé est identifié par son projet et son service Compose, puis s
 
 Cette preuve couvre une panne courte et le retour de nouveaux exports. Elle ne garantit ni le rattrapage de toutes les données émises pendant l’arrêt, ni leur conservation après saturation ou redémarrage des files en mémoire. Le test tente la reprise du Collector dans sa phase de sortie, y compris lorsqu’un contrôle échoue. Il ne modifie pas la source PostgreSQL ni les volumes.
 
+## Arrêt complet et reprise exécutés en CI
+
+La [recette 36014240703](https://github.com/nicolashedoire/devenir-devops/actions/runs/36014240703) a réussi sur le commit `e618d1bb7a281d08e218b95ce202d2ef42b835f5`, le 24 septembre 2026, sous Ubuntu 24.04 / Linux AMD64. La chaîne des trois signaux, la panne Collector et le cycle complet `down` puis `up -d --no-build` ont terminé avec un code nul. La preuve `preuves/collector-4qUe8r/resultat.json` de l’artefact porte `statut: valide`, tout comme sa section `reprise_pile`.
+
+Pendant la panne du Collector, la lecture reste à 200 avec le témoin identique ; le compteur métier collecté par Prometheus passe de 43 à 48. Après reprise du Collector, le test retire tous les conteneurs du seul projet d’observation sans supprimer ses volumes, puis relance la pile sans reconstruire ni réimporter la base.
+
+| Contrôle de reprise complète | Résultat observé |
+|---|---|
+| Retrait des conteneurs | Aucun conteneur du projet restant après `down` |
+| Volumes | Les cinq volumes PostgreSQL, Prometheus, Grafana, Loki et Tempo gardent leur nom, date de création et pilote |
+| Services | Les huit points de disponibilité redeviennent accessibles |
+| Données métier | Même tâche `id/title/created_at`, sans réimport |
+| Mesure historique Prometheus | Valeur `48` au timestamp `1790260885.451`, identique avant et après reprise |
+| Ancienne observation | Trace `7056afb98ff3349c0221dffb4edaf786` et journal corrélé toujours consultables |
+| Nouvelle observation | Trace `1f27b0c85424e85ab9b78de5a8f6328a`, journal et parentage HTTP → SQL reçus après reprise |
+
+Le contrôle de métrique interroge **le même instant historique** avant et après : les compteurs applicatifs en mémoire repartent avec les processus, tandis que les échantillons conservés dans Prometheus restent consultables. Cette recette prouve un arrêt ordinaire et une reprise sur le même hôte, pas une récupération après perte de disque. Elle ne garantit pas non plus la conservation de toute la télémétrie produite pendant une panne longue. La base source du parcours et les autres projets ne sont pas touchés.
+
 ## Limites conservées dans la preuve
 
  La configuration du lien Grafana est vérifiée par son API, sans prétendre à une validation visuelle interactive de chaque panneau. Aucune notification externe, charge de production, haute disponibilité, exposition publique ou restauration des backends de télémétrie n’a été validée.
