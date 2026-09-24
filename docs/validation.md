@@ -11,6 +11,8 @@ Environnement : macOS arm64, Node.js 24.19.0, Docker 29.3.1 et Compose 5.1.0. L�
 | Installation des dépendances par `npm ci` | Réussie | Dépendances de package-lock.json |
 | Tests automatisés de l’application | 18 tests réussis | HTTP, Unicode, bornes, pannes, migration et smoke |
 | Audit npm des dépendances d’exécution | 0 vulnérabilité signalée à cet instant | Ce résultat évolue avec la base de vulnérabilités |
+| Parcours HTTP des guides 01–02 | Réussi | Démarrage mémoire, port, réponses, smoke et disparition au redémarrage |
+| Exercice Git et challenge du jalon 02 | Réussis dans une copie indépendante | Branche, deux commits, annulation du seul second et état final propre |
 | Construction et démarrage Compose | Réussis | PostgreSQL, migration explicite puis API |
 | Remplacement du conteneur API | Tâche conservée à l’identique | Identifiant, titre et date contrôlés |
 | Sauvegarde puis restauration séparée | Réussie | Lignes, comptage et séquence PostgreSQL identiques |
@@ -22,7 +24,9 @@ Les tests unitaires des migrations utilisent également des doubles de test : le
 
 ## Validation GitHub Actions
 
-La première exécution est en cours de préparation. Ce paragraphe sera remplacé par les liens et les résultats après le premier envoi du code.
+La [première validation complète sur GitHub](https://github.com/nicolashedoire/devenir-devops/actions/runs/35986045983) a réussi sur le commit `e9d1ef31da0bbe44bf8a05ca4b5af4eb1cfe5ae7`, dans un environnement Ubuntu 24.04 / Linux AMD64. Les étapes application, documentation, dépendances, PostgreSQL, persistance et restauration ont toutes réussi. Les preuves sont jointes à cette exécution dans `validation-<SHA>`.
+
+Les exécutions suivantes sont consultables dans [GitHub Actions](https://github.com/nicolashedoire/devenir-devops/actions/workflows/ci.yml). La référence précise d’une image publiée, son commit et le résultat de publication figurent dans les notes de [version](https://github.com/nicolashedoire/devenir-devops/releases) et dans l’artefact `publication-<SHA>`. Une exécution verte sans option de publication ne crée pas d’image dans le registre.
 
 Le workflow `.github/workflows/ci.yml` exige le succès des tests, de la persistance et de la restauration avant la publication manuelle. Il conserve et transfère la même image entre validation et publication. Aucun job de déploiement cloud n’est présent.
 

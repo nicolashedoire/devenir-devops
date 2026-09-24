@@ -1,5 +1,7 @@
 # Devenir DevOps — le parcours TaskBoard
 
+[![Vérification du parcours](https://github.com/nicolashedoire/devenir-devops/actions/workflows/ci.yml/badge.svg)](https://github.com/nicolashedoire/devenir-devops/actions/workflows/ci.yml)
+
 Apprendre à faire évoluer **la même application**, depuis votre ordinateur jusqu’à une livraison exploitable, en gardant des preuves à chaque étape.
 
 Ce dépôt public accompagne **Devenir DevOps — De zéro à la production**. Il contient le projet pédagogique, les exercices et leurs corrigés. Le manuscrit du livre reste séparé.
