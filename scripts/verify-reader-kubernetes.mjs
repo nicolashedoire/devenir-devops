@@ -35,7 +35,16 @@ async function awaitEndpoints(count) {
 }
 function readFromPod(name, target) {
   return json('exec','-n',ns,name,'-c','api','--','node','--input-type=module','-e',
-    `try {const r=await fetch(${JSON.stringify(target)},{signal:AbortSignal.timeout(3000)});console.log(JSON.stringify({status:r.status,body:await r.json()}));}catch(e){console.log(JSON.stringify({status:null,error_type:e.name}));}`);
+    `try {const r=await fetch(${JSON.stringify(target)},{signal:AbortSignal.timeout(3000)});console.log(JSON.stringify({status:r.status,body:await r.json()}));}catch(e){console.log(JSON.stringify({status:null,error_type:e.name,error_code:e.cause?.code||e.code||null}));}`);
+}
+async function awaitService(name, expectedStatus) {
+  const deadline=Date.now()+30000;let last;
+  while(Date.now()<deadline){
+    last=readFromPod(name,'http://taskboard-api:3000/api/tasks');
+    if(last.status===expectedStatus)return last;
+    await sleep(1000);
+  }
+  throw Error(`Service non convergé : ${JSON.stringify({status:last?.status,error_type:last?.error_type,error_code:last?.error_code,endpoints:endpoints().length})}`);
 }
 function checkWitness(name) {
   const response=readFromPod(name,`http://127.0.0.1:3000/api/tasks/${witness.id}`);
@@ -105,16 +114,16 @@ try {
   record(12,'requests/limits appliquées et données intactes',{resources});
 
   const name=resourcePods[0].metadata.name;
-  assert.equal(readFromPod(name,'http://taskboard-api:3000/api/tasks').status,200);
   await awaitEndpoints(2);
+  await awaitService(name,200);
   kube('patch','service','taskboard-api','-n',ns,'--type=merge','-p',JSON.stringify({spec:{selector:{'app.kubernetes.io/instance':'taskboard-absent'}}}));
   await awaitEndpoints(0);
-  const broken=readFromPod(name,'http://taskboard-api:3000/api/tasks');
+  const broken=await awaitService(name,null);
   assert.equal(broken.status,null);checkWitness(name);
   record(12,'sélecteur faux : zéro destination et échec du Service, Pod direct encore correct',{erreur_reseau:broken.error_type});
   kube('patch','service','taskboard-api','-n',ns,'--type=merge','-p',JSON.stringify({spec:{selector:{'app.kubernetes.io/instance':'taskboard'}}}));
   await awaitEndpoints(2);
-  assert.equal(readFromPod(name,'http://taskboard-api:3000/api/tasks').status,200);checkWitness(name);
+  await awaitService(name,200);checkWitness(name);
   record(12,'sélecteur restauré : destinations et lecture revenues');
 
   // Fin du chapitre 12 : Helm reprend les champs modifiés volontairement avec kubectl.
