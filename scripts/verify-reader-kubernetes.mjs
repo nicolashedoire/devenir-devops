@@ -65,7 +65,7 @@ async function checkTunnel() {
   }
 }
 function restoreHelm() {
-  run('helm',['upgrade','taskboard',chart,'-n',ns,'-f',values,'--wait','--wait-for-jobs','--timeout=180s']);
+  run('helm',['upgrade','taskboard',chart,'-n',ns,'-f',values,'--force-conflicts','--wait','--wait-for-jobs','--timeout=180s']);
 }
 function record(chapter, test, data={}) {
   cases.push({ chapitre:chapter, controle:test, resultat:'succes', ...data });
@@ -117,6 +117,8 @@ try {
   assert.equal(readFromPod(name,'http://taskboard-api:3000/api/tasks').status,200);checkWitness(name);
   record(12,'sélecteur restauré : destinations et lecture revenues');
 
+  // Fin du chapitre 12 : Helm reprend les champs modifiés volontairement avec kubectl.
+  restoreHelm();checkAll(await awaitPods(2));
   run('helm',['lint',chart,'-f',values]);
   const rendered=run('helm',['template','taskboard',chart,'-n',ns,'-f',values,'--set','replicaCount=3']);
   assert.match(rendered,/^  replicas: 3$/m);
