@@ -32,7 +32,7 @@ try{
  const failed=JSON.parse(helm(['status','taskboard','-n',ns,'-o','json']).stdout);
  assert.equal(failed.info.status,'failed');
  const pods=JSON.parse(kube('get','pods','-n',ns,'-o','json'));
- pullStates=pods.items.filter(p=>p.spec.containers.some(c=>c.image===broken)).flatMap(p=>(p.status.containerStatuses||[]).map(s=>s.state?.waiting?.reason).filter(Boolean));
+ pullStates=pods.items.filter(p=>p.spec.containers.some(c=>c.image===broken)).flatMap(p=>[...(p.status.initContainerStatuses||[]),...(p.status.containerStatuses||[])].map(s=>s.state?.waiting?.reason).filter(Boolean));
  assert(pullStates.some(s=>['ErrImagePull','ImagePullBackOff'].includes(s)),`Un Pod doit montrer l’échec de téléchargement : ${pullStates}`);
  console.log('Image inexistante : échec attendu, diagnostic de téléchargement constaté.');
 }finally{

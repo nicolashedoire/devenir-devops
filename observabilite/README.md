@@ -40,7 +40,7 @@ Les ports sont liés à `127.0.0.1`. Les protocoles OTLP et PostgreSQL ne sont p
 
 `app-observe.mjs` appelle le même `createApp` que l’application principale. Son enveloppe crée un span serveur HTTP, transporte le contexte W3C lorsqu’il est fourni et ajoute `X-Trace-ID` à la réponse. Chaque requête SQL métier devient un span enfant. Le logger conserve le JSON de l’application et y ajoute `trace_id`, `span_id` et `scenario`. Les journaux corrélés passent par le SDK OpenTelemetry et le Collector vers l’ingestion OTLP native de Loki. Les valeurs des paramètres SQL, les titres des tâches et le mot de passe ne sont pas exportés dans les traces.
 
-Les routes sont normalisées : `/api/tasks/42` devient `/api/tasks/:id`. Un identifiant de tâche n’est pas un label de métrique. Cela borne le nombre de séries au lieu de créer une série par requête. Le SDK prélève toutes les traces du petit laboratoire ; une production doit définir un échantillonnage, une politique de données et un budget de collecte.
+Les routes sont normalisées : `/api/tasks/42` devient `/api/tasks/:id`. Un identifiant de tâche n’est pas un label de métrique. Cela borne le nombre de séries au lieu de créer une série par requête. Sans contexte parent entrant, le SDK échantillonne toutes les requêtes du petit laboratoire ; lorsqu’un parent est fourni, il respecte sa décision d’échantillonnage. Une production doit définir cette politique, les données autorisées et un budget de collecte.
 
 La durée HTTP est mesurée par l’application et exposée dans un histogramme cumulatif. Les buckets ne contiennent pas la liste des durées individuelles. `histogram_quantile` estime le p95 à partir de leur répartition : un délai réel de 1,5 seconde peut produire une estimation proche de 2,4 secondes avec ces bornes. La trace de la requête montre sa durée individuelle et aide à comprendre cet écart.
 
@@ -64,7 +64,7 @@ bash scripts/verify-observability.sh
 
 Le script construit une image locale dédiée à l’observation, démarre uniquement `taskboard-observabilite`, attend les services, puis envoie pendant environ 80 secondes des lectures de la tâche sur les trois API. Il vérifie les réponses 200/200/503, la lenteur mesurée, les trois cibles Prometheus, le p95, deux alertes déclenchées, le tableau de bord provisionné, les journaux retrouvés par trace et le parentage HTTP → SQL. Il n’écrit aucune tâche.
 
-Le résultat se trouve dans le dossier `observabilite/preuves/verification-XXXXXX/` annoncé à la fin. Un `resultat.json` portant `statut: valide` est la preuve de cette exécution ; un simple démarrage de conteneurs ne l’est pas. Les preuves contiennent les données utiles au diagnostic et restent ignorées par Git.
+Le résultat se trouve dans le dossier `observabilite/preuves/verification-XXXXXX/` annoncé à la fin. Pour conclure au succès, le script doit terminer avec un code de sortie nul **et** son `resultat.json` porter `statut: valide` : la vérification des règles par `promtool` intervient aussi dans le script. Un simple démarrage de conteneurs ne suffit pas. Les preuves contiennent les données utiles au diagnostic et restent ignorées par Git.
 
 Pour observer manuellement, reprendre le `temoin_id` de la preuve d’import :
 

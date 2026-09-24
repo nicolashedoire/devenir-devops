@@ -77,3 +77,22 @@ bash scripts/verify-infra.sh
 ```
 
 Les services de laboratoire restent démarrés après les scripts afin d’examiner les résultats. `docker compose down` les arrête en conservant les données. Les dossiers `preuves/` et `backups/` restent locaux et sont ignorés par Git. Les artefacts CI constituent des preuves temporaires ; leur durée de conservation figure dans le workflow.
+
+## Jalon 07 : observabilité complète
+
+La [CI du laboratoire d’observabilité](https://github.com/nicolashedoire/devenir-devops/actions/runs/36009589062) a réussi le 24 septembre 2026 sur `8bceb8608f81e7dd25a5bdfc0a7dde1ee08f4d0a`, sous Ubuntu 24.04 / Linux AMD64. Elle restaure une fixture PostgreSQL 17 dans une copie isolée, puis utilise Collector Contrib 0.161.0, Prometheus 3.14.0, Grafana 13.2.2, Loki 3.7.8 et Tempo 3.0.3, avec images épinglées par digest.
+
+| Contrôle exécuté | Résultat |
+|---|---|
+| Copie et témoin | Schéma/checksum conformes, témoin id/title/created_at identique, lecteur sans INSERT |
+| Scénarios normal / lent / erreur | Réponses 200 / 200 / 503, trois cibles Prometheus disponibles |
+| Métriques et règles | Histogrammes vérifiés, deux alertes `firing`, deux règles acceptées par `promtool` |
+| Journaux et traces | Corrélation trace ID / request ID / span ID ; parentage serveur HTTP → client SQL démontré |
+| Panne volontaire 503 | Absence attendue de span SQL, car erreur provoquée avant la base |
+| Grafana | Six panneaux et trois sources provisionnés ; lien des journaux vers Tempo contrôlé par API |
+
+Le script a terminé avec un code nul et `resultat.json` indique `valide`. L’artefact `observabilite` contient les preuves et le SHA sans le dump ; il est conservé 14 jours. Le [registre détaillé](../observabilite/validation.md) distingue les durées individuelles des quantiles estimés et décrit les limites de cette exécution.
+
+L’import local du **véritable fil rouge** a également réussi sur macOS ARM64 : PostgreSQL 17.11, témoin id 1 identique, checksum de migration identique et rôle sans INSERT. Les téléchargements suivants ont été interrompus par un disque plein puis un moteur Docker local indisponible ; la chaîne complète macOS ARM64 n’est pas déclarée validée. La CI Linux utilise une fixture distincte et ne remplace pas la preuve des données du lecteur.
+
+Un contrôle Node local avec récepteur OTLP de test a vérifié séparément la propagation d’un `traceparent` entrant, les exports de logs/traces et l’arrêt du SDK. Le générateur de trafic n’exporte pas de span client HTTP. L’arrêt manuel du Collector, la livraison de notifications externes, les essais de charge, la haute disponibilité et une exposition de production ne font pas partie du verdict de ce jalon.
