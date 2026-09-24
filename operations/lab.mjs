@@ -224,12 +224,19 @@ async function main() {
         need(firing, 'Aucune notification firing reçue dans les 120 secondes.');
         console.log('Notification firing reçue par le destinataire local ; reprise de la base.');
       } finally { recoveryStart=Date.now(); dc(['start','db']); operationsDbStopped = false; }
-      await ready(); const serviceRestored=Date.now();
+      await ready();
+      need((await request('/api/tasks')).status === 200, 'La reprise exige une lecture métier réussie après la disponibilité.');
+      const serviceRestored=Date.now();
       const deadline=Date.now()+120000;
       while(Date.now()<deadline){await request();resolved=events().slice(before).find(e=>e.status==='resolved');if(resolved)break;await sleep(1000);}
       need(resolved, 'Aucune notification resolved reçue dans les 120 secondes après reprise.');
       const result=await verify();
-      await saveProof('incident', { startedAt, firing, resolved, impact_observe_ms:serviceRestored-failureStart,
+      await saveProof('incident', { startedAt,
+        panne_declenchee_a: new Date(failureStart).toISOString(),
+        reprise_demandee_a: new Date(recoveryStart).toISOString(),
+        premiere_lecture_reussie_observee_a: new Date(serviceRestored).toISOString(),
+        mesure_impact: 'Début de la demande d’arrêt jusqu’à la première lecture métier 200 observée après reprise ; résolution temporelle limitée par la sonde.',
+        firing, resolved, impact_observe_ms:serviceRestored-failureStart,
         reprise_apres_action_ms:serviceRestored-recoveryStart, ...result,
         limite:'Indisponibilité de dépendance locale ; aucune perte de disque ou de zone cloud.' });
     } else if (command === 'restore') {
