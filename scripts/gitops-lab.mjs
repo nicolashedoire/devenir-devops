@@ -34,11 +34,15 @@ if (action === 'install') {
     const app = JSON.parse(await readFile(path.join(root, `deploy/gitops/apps/${name}.json`)));
     app.spec.source.repoURL = repository;
     run('kubectl', ['apply', '-f', '-'], { input: JSON.stringify(app) });
+    // Après un import Helm, les ressources peuvent déjà être identiques :
+    // Synced seul ne prouve ni l'adoption ni l'exécution du hook de migration.
+    kube('patch', 'application', `taskboard-${name}`, '-n', 'argocd', '--type=merge', '-p', JSON.stringify({ operation: { initiatedBy: { username: 'atelier-local' }, sync: { prune: true } } }));
   }
   console.log('Argo CD installé. Les namespaces recette et production restent des laboratoires locaux.');
   console.log('Attendre leur réconciliation : node scripts/gitops-lab.mjs verify');
 } else if (action === 'verify') {
   for (const name of ['recette', 'production']) {
+    kube('wait', '-n', 'argocd', '--for=jsonpath={.status.operationState.phase}=Succeeded', `application/taskboard-${name}`, '--timeout=300s');
     kube('wait', '-n', 'argocd', '--for=jsonpath={.status.sync.status}=Synced', `application/taskboard-${name}`, '--timeout=300s');
     kube('wait', '-n', 'argocd', '--for=jsonpath={.status.health.status}=Healthy', `application/taskboard-${name}`, '--timeout=300s');
     const app = JSON.parse(kube('get', 'application', '-n', 'argocd', `taskboard-${name}`, '-o', 'json'));

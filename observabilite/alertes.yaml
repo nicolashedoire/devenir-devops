@@ -1,0 +1,26 @@
+groups:
+  - name: taskboard-laboratoire
+    rules:
+      - alert: TaskboardErreursHTTP
+        expr: |
+          (sum by (scenario) (rate(taskboard_http_requests_total{route=~"/api/tasks.*",status=~"5.."}[1m]))
+          / clamp_min(sum by (scenario) (rate(taskboard_http_requests_total{route=~"/api/tasks.*"}[1m])), 0.001)) > 0.05
+        for: 15s
+        labels:
+          severity: warning
+          environnement: laboratoire
+        annotations:
+          summary: "Plus de 5 % de réponses 5xx dans le scénario {{ $labels.scenario }}"
+          description: "Alerte pédagogique ; examiner la trace avant d'accuser PostgreSQL."
+      - alert: TaskboardLatenceHTTP
+        expr: |
+          histogram_quantile(0.95,
+            sum by (scenario, le) (rate(taskboard_http_request_duration_seconds_bucket{route=~"/api/tasks.*"}[1m]))
+          ) > 1
+        for: 15s
+        labels:
+          severity: warning
+          environnement: laboratoire
+        annotations:
+          summary: "p95 supérieur à une seconde dans le scénario {{ $labels.scenario }}"
+          description: "Le quantile est une estimation par buckets, pas une mesure exacte de chaque requête."

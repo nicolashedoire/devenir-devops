@@ -1,0 +1,24 @@
+name: taskboard-observabilite-fixture
+# Uniquement pour la CI : données synthétiques dans un tmpfs, aucun volume utilisateur.
+services:
+  db:
+    image: postgres:17@sha256:f4c66b820c6f974249089d3d16d86a3698eae11e8746eb6644b2271031e91232
+    environment:
+      POSTGRES_USER: taskboard
+      POSTGRES_DB: taskboard
+      POSTGRES_PASSWORD: lab-only-change-me
+    tmpfs:
+      - /var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U taskboard -d taskboard"]
+      interval: 2s
+      timeout: 2s
+      retries: 30
+  migrate:
+    image: taskboard-observabilite:local
+    command: ["node", "scripts/migrate.mjs"]
+    environment:
+      DATABASE_URL: postgres://taskboard:lab-only-change-me@db:5432/taskboard
+    depends_on:
+      db:
+        condition: service_healthy

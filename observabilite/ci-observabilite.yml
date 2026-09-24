@@ -1,0 +1,57 @@
+# Copier ce workflow dans .github/workflows/observabilite.yml pour l'activer.
+name: Vérifier le laboratoire d'observabilité
+on:
+  workflow_dispatch:
+permissions:
+  contents: read
+defaults:
+  run:
+    shell: bash
+jobs:
+  observabilite:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 20
+    steps:
+      - name: Récupérer la révision testée
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - name: Préparer Node
+        uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
+        with:
+          node-version-file: .node-version
+      - name: Construire une source synthétique PostgreSQL 17
+        run: bash observabilite/preparer-fixture-ci.sh
+      - name: Importer et vérifier sa copie
+        run: |
+          bash observabilite/importer-snapshot.sh \
+            observabilite/imports-ci/taskboard.dump \
+            observabilite/imports-ci/tache-temoin.json
+      - name: Vérifier le parcours métriques, journaux, traces et alertes
+        run: bash scripts/verify-observability.sh
+      - name: Conserver le diagnostic
+        if: always()
+        run: |
+          mkdir -p observabilite/preuves/ci
+          docker compose -p taskboard-observabilite -f observabilite/compose.yaml ps -a \
+            > observabilite/preuves/ci/services.txt
+          docker compose -p taskboard-observabilite -f observabilite/compose.yaml logs --no-color --tail 100 \
+            > observabilite/preuves/ci/journaux.txt
+          printf '%s\n' "$GITHUB_SHA" > observabilite/preuves/ci/revision.txt
+          printf '%s\n' 'Source synthétique CI ; la continuité du témoin lecteur exige aussi un import local.' \
+            > observabilite/preuves/ci/perimetre.txt
+      - name: Arrêter exclusivement les services du test
+        if: always()
+        run: |
+          docker compose -p taskboard-observabilite -f observabilite/compose.yaml down
+          docker compose -p taskboard-observabilite-fixture -f observabilite/fixture.compose.yaml down
+      - name: Joindre les preuves sans la sauvegarde
+        if: always()
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        with:
+          name: observabilite
+          path: |
+            observabilite/preuves/
+            observabilite/imports/resultat.json
+          if-no-files-found: error
+          retention-days: 14

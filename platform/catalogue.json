@@ -1,0 +1,14 @@
+{
+  "schema_version": 1,
+  "template_version": "1.0.0",
+  "offer_id": "taskboard-local",
+  "description": "Changer l'image et le port local de TaskBoard en conservant son projet Compose et son volume PostgreSQL.",
+  "scope": "laboratoire-local",
+  "allowed_image": "ghcr.io/nicolashedoire/devenir-devops@sha256:12ea642202176da67ad6f4244f8ec01840db11b0a883ca39304a281c2d749d63",
+  "allowed_port_min": 3400,
+  "allowed_port_max": 3499,
+  "cpu_limit": 1,
+  "memory_limit": "256m",
+  "requires_existing_witness": true,
+  "starts_services": false
+}
