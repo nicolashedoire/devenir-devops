@@ -1,6 +1,6 @@
 # Jalon 05 — Décrire et contrôler ses fondations AWS avec OpenTofu
 
-**Chapitres 9–10. Atelier rédigé ; validation locale uniquement tant qu’une exécution AWS n’est pas consignée.** Le [registre de validation](../../docs/validation.md) distingue les essais réalisés des résultats attendus ci-dessous. La version du parcours est `v0.3.0` ; l’application TaskBoard reste en `0.2.0`.
+**Chapitres 9–10. Atelier rédigé ; validation locale uniquement tant qu’une exécution AWS n’est pas consignée.** Le [registre de validation](../../docs/validation.md) distingue les essais réalisés des résultats attendus ci-dessous. La version du parcours est `v1.0.0` ; l’application TaskBoard reste en `0.2.0`.
 
 ## 1. Le problème : créer un environnement que l’on sait retirer
 
@@ -69,11 +69,9 @@ Nous retenons **OpenTofu 1.12.6** pour disposer d’une seule chaîne d’exerci
 
 ## 4. Prérequis et état d’entrée
 
-Vous avez terminé les jalons 01–04 et conservé `preuves/tache-temoin.json`, le volume PostgreSQL et ses sauvegardes. Les commandes partent de la racine du dépôt. Si une commande échoue, arrêtez la séquence et diagnostiquez l’erreur. Le lien `&&` signifie « poursuivre seulement si la commande précédente réussit ». Avant un changement de version Git, vérifiez `git status --short` et enregistrez votre travail. Pour consulter la référence publiée :
+Vous avez terminé les jalons 01–04 et conservé `preuves/tache-temoin.json`, le volume PostgreSQL et ses sauvegardes. Les commandes partent de la racine du dépôt. Si une commande échoue, arrêtez la séquence et diagnostiquez l’erreur. Le lien `&&` signifie « poursuivre seulement si la commande précédente réussit ». Si vous avez commencé sur `v1.0.0`, restez sur votre branche d’apprentissage : aucune nouvelle sélection de version n’est nécessaire. Si vous arrivez d’une ancienne préédition, préservez votre travail et suivez la [préparation de la référence du livre](../../docs/demarrer.md) avant de continuer.
 
 ```sh
-git fetch origin --tags
-git switch --detach v0.3.0
 node scripts/install-tofu.mjs
 export PATH="$PWD/work/bin:$PATH"
 tofu version
@@ -81,7 +79,7 @@ tofu version
 
 La sortie attendue est OpenTofu **1.12.6**. L’installateur place l’outil dans `work/` et contrôle les empreintes épinglées ; il ne configure aucun compte AWS. Le fournisseur AWS est fixé à **6.66.0**, le fournisseur local à **2.9.1**. Ces versions servent de références à l’atelier.
 
-Créez une branche pour vos exercices, par exemple `git switch -c apprentissage/jalon-05`. Si elle existe déjà, rejoignez-la avec `git switch apprentissage/jalon-05` et vérifiez qu’elle contient bien le code du jalon.
+Vous pouvez conserver votre branche d’apprentissage ou en créer une à partir de son état actuel avec `git switch -c apprentissage/jalon-05`. Vérifiez d’abord `git status --short` et enregistrez votre travail. Ne rejoignez pas automatiquement une ancienne branche du même nom : elle pourrait contenir une autre version du parcours.
 
 ## 5. Première pratique : répéter sans compte cloud
 

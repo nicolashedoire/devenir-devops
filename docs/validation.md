@@ -1,6 +1,6 @@
 # Registre de validation
 
-**Préédition du parcours 0.3.0 — 24 septembre 2026.** Ce registre décrit les essais réellement exécutés. Les guides 01–05 sont disponibles ; les jalons 06–10 restent à réaliser. Le jalon 05 attend encore son essai AWS réel. La validation d’une commande ne vaut pas validation pédagogique auprès d’un débutant.
+**Compagnon de l’édition 2027 — version de livraison 1.0.0, 24 septembre 2026.** Les dix jalons fournissent leurs ateliers et corrigés. Ce registre décrit les essais réellement exécutés, avec leurs commits et leurs limites. Le jalon cloud fournit une répétition locale et des tests AWS simulés ; aucune infrastructure AWS réelle n’a été créée. La validation technique ne remplace pas l’essai pédagogique par un débutant.
 
 ## Résultats locaux
 
@@ -50,16 +50,17 @@ Le workflow `infra.yml` rejoue ces contrôles sans compte AWS. Les résultats de
 
 **Aucun réseau, bucket, rôle ou service AWS n’a été créé pour cette validation.** STS, permissions IAM, disponibilité des zones, concurrence du verrou S3, dérive réelle et inventaire après retrait restent à vérifier dans un compte de laboratoire autorisé. Aucun montant de facture AWS n’a donc été observé. Le guide distingue explicitement les commandes testées localement des résultats attendus sur AWS.
 
-## Ce qui reste à valider
+## Limites qui restent ouvertes
 
-- Installation et lecture des quatre guides par un débutant sur une machine propre.
-- Parcours Windows/WSL et variantes de distributions Linux.
-- Exécution AWS réelle du jalon 05, puis Kubernetes/Helm/GitOps et promotion entre environnements.
-- Collecte complète des métriques, logs et traces, alertes et essais de charge.
-- Authentification utilisateur, contrôle des accès et reprise sur une cible de production.
-- Plateforme en libre-service et client/serveur MCP.
+- Parcours intégral par un débutant indépendant, sur une machine propre ; variantes Windows/WSL et distributions non essayées.
+- Création et retrait réels des fondations AWS dans un compte autorisé, vérification IAM/STS et concurrence du verrou distant.
+- Exposition publique avec identité utilisateur, autorisations par personne, DNS et certificats publics. La passerelle locale à jeton partagé n’implémente pas une identité métier.
+- Déploiement EKS/RDS multizone, restauration hors site, capacité et charge représentatives d’utilisateurs réels.
+- Fonctionnement complet de la télémétrie sur macOS ARM64 : son import a passé, mais les backends n’ont pas tous démarré avant l’indisponibilité du moteur local.
+- Arrêt manuel du Collector, lecture interactive de chaque panneau et notification vers un destinataire externe : la CI teste les API des backends et le récepteur d’alerte local.
+- Intégration avec un modèle d’IA ou un autre client MCP : le client/serveur stdio fourni fonctionne sans service payant ni modèle.
 
-L’ancienne extension OpenTelemetry du livre possède des essais séparés ; elle n’est pas intégrée à cette version du parcours. Les fichiers de `archive/legacy/` ne sont pas validés par le workflow actif.
+Les anciens exemples de `archive/legacy/` restent hors du parcours actif. Les exemples d’architecture de production constituent un dossier de conception ; les ateliers exécutés valident les responsabilités décrites dans le périmètre local annoncé.
 
 ## Rejouer les contrôles
 
@@ -96,3 +97,44 @@ Le script a terminé avec un code nul et `resultat.json` indique `valide`. L’a
 L’import local du **véritable fil rouge** a également réussi sur macOS ARM64 : PostgreSQL 17.11, témoin id 1 identique, checksum de migration identique et rôle sans INSERT. Les téléchargements suivants ont été interrompus par un disque plein puis un moteur Docker local indisponible ; la chaîne complète macOS ARM64 n’est pas déclarée validée. La CI Linux utilise une fixture distincte et ne remplace pas la preuve des données du lecteur.
 
 Un contrôle Node local avec récepteur OTLP de test a vérifié séparément la propagation d’un `traceparent` entrant, les exports de logs/traces et l’arrêt du SDK. Le générateur de trafic n’exporte pas de span client HTTP. L’arrêt manuel du Collector, la livraison de notifications externes, les essais de charge, la haute disponibilité et une exposition de production ne font pas partie du verdict de ce jalon.
+
+## Images publiées sur deux architectures
+
+Le workflow `images-multiarch.yml` a testé l’application, PostgreSQL, la persistance et la restauration sur des runners **AMD64 et ARM64 natifs**. Il transmet ensuite les images testées à la publication et assemble leurs digests sans reconstruire l’application. Les deux images de l’exercice de promotion sont accessibles publiquement :
+
+| Image | Source | Preuve |
+|---|---|---|
+| Référence initiale `12ea6422…` | `819be000ad7499955a5772eaa847b275ba52c8b2` | [Validation et publication multiarchitecture](https://github.com/nicolashedoire/devenir-devops/actions/runs/36002965038) |
+| Reconstruction candidate `bf5a8ddb…` | `0e1766c9b704867bf878437b9bdb3b091e30b1c1` | [Validation et publication candidate](https://github.com/nicolashedoire/devenir-devops/actions/runs/36006797979) |
+
+Les références complètes sont dans `deploy/image-reference.json` et `deploy/image-candidates/reconstruction.json`. L’application reste en version fonctionnelle 0.2.0 : le second artefact change sa provenance de construction, sans prétendre ajouter une fonction métier. Le numéro 1.0.0 désigne le compagnon pédagogique.
+
+## Kubernetes, Helm et GitOps
+
+La [recette du 24 septembre](https://github.com/nicolashedoire/devenir-devops/actions/runs/36009525826) a réussi sur `8bceb8608f81e7dd25a5bdfc0a7dde1ee08f4d0a`, sous Ubuntu 24.04 / Linux AMD64. Les outils sont fixés dans `deploy/tools-lock.json` ; leurs empreintes sont vérifiées avant installation.
+
+- Source PostgreSQL et tâche témoin créées pour cette exécution ; import dans trois namespaces distincts, comparaison de toutes les lignes, de la séquence et du témoin.
+- Remplacement réel d’un Pod API, puis du Pod PostgreSQL ; identifiant du volume conservé et tâche inchangée.
+- Adoption par Argo CD, opération de synchronisation effectivement réussie, contrôle de disponibilité et de la version.
+- Dérive volontaire d’un nombre de réplicas en recette, correction automatique vers l’état Git.
+- Promotion du digest candidat en recette puis production, retour au digest initial dans les deux environnements ; version et tâche vérifiées à chacune des quatre étapes.
+
+La recette de promotion utilise deux commits Git prépubliés et immuables ; elle n’écrit pas dans Git depuis la CI. Le guide fait exercer au lecteur un changement et une annulation dans son propre fork. Les trois namespaces appartiennent au même cluster local : ils n’établissent pas une isolation cloud ni une haute disponibilité multizone. Les imports du véritable témoin local ont aussi passé avant l’indisponibilité du moteur Docker ; les remplacements complets et la promotion sont attestés par la CI ci-dessus.
+
+## Sécurité, SRE et reprise
+
+La [recette opérations](https://github.com/nicolashedoire/devenir-devops/actions/runs/36009530009), sur `8bceb8608f81e7dd25a5bdfc0a7dde1ee08f4d0a`, a exécuté les **8 tests de frontière HTTPS** puis l’import et les cinq étapes opérationnelles. Le [registre détaillé](../operations/validation.md) conserve mesures et limites.
+
+TLS non approuvé refusé, requêtes sans/faux jeton refusées, écriture autorisée relue, rôle PostgreSQL sans création de table, rotation du jeton, 20 lectures HTTPS réussies sur 20, restauration distincte avec lignes et séquence identiques, réception des notifications `firing` puis `resolved` ont été observés. Le délai de restauration mesuré concerne une petite fixture ; il n’est pas un engagement de production. La sonde enregistre les valeurs ; l’équipe doit les confronter à ses objectifs. Aucune notification n’a été envoyée à un tiers.
+
+## Plateforme locale et MCP
+
+La [recette plateforme/MCP](https://github.com/nicolashedoire/devenir-devops/actions/runs/36010610896) a réussi sur `93774d85bcfa0a3f3ca6869092bb6e0595f79b7d`, sous Linux AMD64 / Node 24.19.0.
+
+Les **9 tests** exercent les demandes hors contrat, l’écrasement refusé, les chemins et liens symboliques refusés, les bornes du transport, le JSON mal formé, l’initialisation et les appels réels par stdio. Le titre piégé d’une tâche n’est pas renvoyé comme instruction. Le client termine proprement le serveur.
+
+La recette a ensuite généré et réellement livré l’offre avec l’image autorisée, retrouvé le témoin identique sur `127.0.0.1:3400` et inspecté les limites : un processeur, 256 Mio, utilisateur `node`, système de fichiers en lecture seule. Les outils MCP ont lu le témoin et le contrat généré. Le générateur seul ne démarre aucun conteneur ; la recette de livraison est une action distincte. Le serveur lit des preuves locales et n’appelle aucun modèle d’IA. L’artefact `plateforme-mcp` conserve le résultat expurgé pendant 30 jours.
+
+### Panne Helm et retour à la version connue
+
+La [recette étendue](https://github.com/nicolashedoire/devenir-devops/actions/runs/36010676439) a réussi sur `d9e60fa9b1991326f48dd6b4d3bfe01e298da14c`. Elle rejoue aussi les imports, remplacements, réconciliation et promotions décrits ci-dessus. Elle déploie volontairement un digest inexistant dans `taskboard-lab`, constate l’échec de Helm et le refus de téléchargement dans les états des conteneurs initiaux, puis revient à la révision précédente. L’image et les trois champs de la tâche sont vérifiés après le retour. Le rollback ne prétend pas restaurer un schéma SQL.
