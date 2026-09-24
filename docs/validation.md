@@ -1,6 +1,6 @@
 # Registre de validation
 
-**Compagnon de l’édition 2027 — version de livraison 1.0.0, 24 septembre 2026.** Les dix jalons fournissent leurs ateliers et corrigés. Ce registre décrit les essais réellement exécutés, avec leurs commits et leurs limites. Le jalon cloud fournit une répétition locale et des tests AWS simulés ; aucune infrastructure AWS réelle n’a été créée. La validation technique ne remplace pas l’essai pédagogique par un débutant.
+**Compagnon de l’édition 2026 — version de livraison 1.0.0, 24 septembre 2026.** Les dix jalons fournissent leurs ateliers et corrigés. Ce registre décrit les essais réellement exécutés, avec leurs commits et leurs limites. Le jalon cloud fournit une répétition locale et des tests AWS simulés ; aucune infrastructure AWS réelle n’a été créée. La validation technique ne remplace pas l’essai pédagogique par un débutant.
 
 ## Résultats locaux
 

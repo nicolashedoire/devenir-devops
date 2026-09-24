@@ -1,4 +1,4 @@
-# Références du livre — Édition 2027
+# Références du livre — Édition 2026
 
 Les sources ci-dessous accompagnent les chapitres de **Devenir DevOps — De zéro à la production**, de Nicolas Hedoire. Cette page rend les liens accessibles aux lecteurs du livre imprimé. Les documentations peuvent évoluer ; les versions des outils du laboratoire sont fixées dans le compagnon. Préparation : septembre 2026.
 
