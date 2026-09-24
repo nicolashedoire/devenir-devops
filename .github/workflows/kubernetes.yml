@@ -36,6 +36,8 @@ jobs:
           node scripts/gitops-lab.mjs verify
       - name: Remplacer les Pods et corriger une dérive sans perdre le témoin
         run: node scripts/verify-kubernetes.mjs preuves/tache-temoin.json
+      - name: Promouvoir puis revenir à la version précédente par GitOps
+        run: node scripts/verify-gitops-promotion.mjs preuves/tache-temoin.json
       - name: Conserver les diagnostics utiles
         if: always()
         run: |
