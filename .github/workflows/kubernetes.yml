@@ -1,0 +1,60 @@
+name: Vérifier Kubernetes, Helm et GitOps
+on:
+  workflow_dispatch:
+permissions:
+  contents: read
+defaults:
+  run:
+    shell: bash
+jobs:
+  parcours-kubernetes:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
+        with:
+          node-version-file: .node-version
+      - name: Installer les outils vérifiés
+        run: node scripts/install-kube-tools.mjs
+      - name: Créer une tâche dans la base source
+        run: |
+          bash scripts/verify-compose.sh
+          node --input-type=module -e "import fs from 'node:fs';const dirs=fs.readdirSync('preuves').filter(n=>n.startsWith('verify-compose-')).sort();fs.copyFileSync('preuves/'+dirs.at(-1)+'/tache-temoin.json','preuves/tache-temoin.json');"
+      - name: Créer le cluster de laboratoire isolé
+        run: node scripts/kube-lab.mjs init
+      - name: Importer et comparer données et séquence
+        run: |
+          for ns in taskboard-lab taskboard-recette taskboard-production; do
+            node scripts/kube-lab.mjs import --witness preuves/tache-temoin.json --namespace "$ns"
+          done
+      - name: Adopter les ressources dans Argo CD
+        run: |
+          node scripts/gitops-lab.mjs install
+          node scripts/gitops-lab.mjs verify
+      - name: Remplacer les Pods et corriger une dérive sans perdre le témoin
+        run: node scripts/verify-kubernetes.mjs preuves/tache-temoin.json
+      - name: Conserver les diagnostics utiles
+        if: always()
+        run: |
+          mkdir -p preuves/kubernetes-ci
+          source scripts/kube-env.sh
+          kubectl get pods,jobs,pvc -A > preuves/kubernetes-ci/ressources.txt 2>&1 || true
+          kubectl get applications -n argocd -o json > preuves/kubernetes-ci/applications.json 2>&1 || true
+          kubectl get events -A --sort-by=.metadata.creationTimestamp > preuves/kubernetes-ci/evenements.txt 2>&1 || true
+          printf '%s\n' "$GITHUB_SHA" > preuves/kubernetes-ci/revision.txt
+      - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        if: always()
+        with:
+          name: kubernetes-gitops
+          path: |
+            preuves/**/resultat.json
+            preuves/kubernetes-ci/
+          retention-days: 30
+      - name: Arrêter uniquement les environnements créés par ce test
+        if: always()
+        run: |
+          work/bin/kind delete cluster --name taskboard-lab || true
+          docker compose down
