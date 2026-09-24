@@ -6,7 +6,7 @@ Apprendre à faire évoluer **la même application**, depuis votre ordinateur ju
 
 Ce dépôt public accompagne **Devenir DevOps — De zéro à la production**. Il contient le projet pédagogique, les exercices et leurs corrigés. Le manuscrit du livre reste séparé.
 
-**Préédition 0.2.0 :** les guides des jalons 01–04 sont disponibles ; les jalons 05–10 sont des contrats de réalisation. L’état réel des essais est tenu dans le [registre de validation](docs/validation.md). La présence d’un guide ne signifie pas qu’il a été exécuté sur toutes les machines.
+**Préédition du parcours 0.3.0 :** les guides des jalons 01–05 sont disponibles ; les jalons 06–10 sont des contrats de réalisation. Le jalon 05 fournit une répétition locale et les fondations AWS ; son exécution sur un compte AWS reste à valider. L’état réel des essais est tenu dans le [registre de validation](docs/validation.md). L’application TaskBoard reste en version 0.2.0.
 
 ## Commencer
 
@@ -15,14 +15,14 @@ La version de référence est **Node.js 24.19.0**. Aucun niveau d’anglais pré
 ```sh
 git clone https://github.com/nicolashedoire/devenir-devops.git
 cd devenir-devops
-git switch --detach v0.2.0
+git switch --detach v0.3.0
 npm run doctor
 npm ci
 npm test
 env -u DATABASE_URL HOST=127.0.0.1 PORT=3000 FAULT_MODE=off npm start
 ```
 
-La référence `v0.2.0` fige cette préédition ; `main` continuera d’évoluer. Le mode détaché permet de lire et exécuter cette version précise ; le jalon 02 créera votre branche de travail. Conservez un clone complet pour les exercices Git.
+La référence `v0.3.0` fige cette préédition du parcours ; `main` continuera d’évoluer. Le mode détaché permet de lire et exécuter cette version précise ; le jalon 02 créera votre branche de travail. Conservez un clone complet pour les exercices Git.
 
 Ouvrez <http://127.0.0.1:3000>. Le serveur reste au premier plan ; `Ctrl+C` l’arrête. Sans base de données, les tâches disparaissent à l’arrêt : c’est l’expérience du [jalon 01](parcours/01-machine-local/README.md). La conservation commence au jalon 03 et devient ensuite une exigence permanente.
 
@@ -34,7 +34,7 @@ Ouvrez <http://127.0.0.1:3000>. Le serveur reste au premier plan ; `Ctrl+C` l’
 | [02 — Linux, réseau et Git](parcours/02-linux-reseau-git/README.md) | Comprendre le processus, le port et un changement versionné | Guide disponible |
 | [03 — Docker et PostgreSQL](parcours/03-docker-postgresql/README.md) | Conserver puis restaurer la tâche témoin | Guide disponible |
 | [04 — CI et image traçable](parcours/04-ci-image/README.md) | Relier un commit, des essais et une image identifiée | Guide disponible |
-| [05 — Cloud et OpenTofu](parcours/05-cloud-opentofu/README.md) | Provisionner et retirer une infrastructure bornée | À réaliser |
+| [05 — Cloud et OpenTofu](parcours/05-cloud-opentofu/README.md) | Comprendre l’état, prévoir une dérive et gérer les fondations AWS | Guide et modules disponibles ; essai AWS restant |
 | [06 — Kubernetes, Helm et GitOps](parcours/06-kubernetes-helm-gitops/README.md) | Livrer sans perdre les données ni changer l’artefact | À réaliser |
 | [07 — Observabilité](parcours/07-observabilite/README.md) | Relier métriques, journaux et traces | À réaliser |
 | [08 — Sécurité, SRE et reprise](parcours/08-securite-sre-reprise/README.md) | Contrôler l’accès, alerter et rétablir | À réaliser |
@@ -69,6 +69,7 @@ Cette préédition n’a pas d’authentification utilisateur. L’accès du lab
 - `app/`, `db/migrations/`, `scripts/` : application, schéma et vérifications.
 - `compose.yaml`, `Dockerfile` : environnement local avec PostgreSQL.
 - `.github/workflows/ci.yml` : intégration continue et publication manuelle conditionnelle.
+- `infra/` : répétition locale, stockage d’état et réseau AWS sans serveur ; [atelier 05](parcours/05-cloud-opentofu/README.md).
 - `parcours/` : exercices, preuves de sortie et corrigés.
 - `docs/` : préparation, conventions, glossaire et validation.
 - `archive/legacy/` : anciens exemples Kubernetes et Helm, hors parcours actif.

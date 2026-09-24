@@ -1,0 +1,14 @@
+**/.terraform/
+**/*.tfstate
+**/*.tfstate.*
+**/*.tfplan
+**/*.tfvars
+**/*.auto.tfvars.json
+**/backend.hcl
+**/run/
+**/crash.log
+**/crash.*.log
+# Les exemples et les verrous des providers restent versionnés.
+!**/*.tfvars.example
+!**/backend.hcl.example
+!**/.terraform.lock.hcl

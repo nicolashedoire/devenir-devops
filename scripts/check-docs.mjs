@@ -3,7 +3,7 @@ import { readdir, readFile, stat } from 'node:fs/promises';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 const root = fileURLToPath(new URL('../', import.meta.url));
-const ignored = new Set(['.git', 'node_modules', 'preuves', 'backups', 'archive']);
+const ignored = new Set(['.git', '.terraform', 'node_modules', 'preuves', 'backups', 'archive', 'work']);
 async function files(dir) {
   const result = [];
   for (const entry of await readdir(dir, { withFileTypes: true })) {

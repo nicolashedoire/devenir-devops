@@ -1,6 +1,6 @@
 # Registre de validation
 
-**Préédition 0.2.0 — 24 septembre 2026.** Ce registre décrit les essais réellement exécutés. Les guides 01–04 sont disponibles ; les jalons 05–10 restent à réaliser. La validation d’une commande ne vaut pas validation pédagogique auprès d’un débutant.
+**Préédition du parcours 0.3.0 — 24 septembre 2026.** Ce registre décrit les essais réellement exécutés. Les guides 01–05 sont disponibles ; les jalons 06–10 restent à réaliser. Le jalon 05 attend encore son essai AWS réel. La validation d’une commande ne vaut pas validation pédagogique auprès d’un débutant.
 
 ## Résultats locaux
 
@@ -30,11 +30,31 @@ Les exécutions suivantes sont consultables dans [GitHub Actions](https://github
 
 Le workflow `.github/workflows/ci.yml` exige le succès des tests, de la persistance et de la restauration avant la publication manuelle. Il conserve et transfère la même image entre validation et publication. Aucun job de déploiement cloud n’est présent.
 
+## Jalon 05 : vérification locale et simulation AWS
+
+Exécuté sur macOS ARM64 avec OpenTofu **1.12.6**, fournisseur `hashicorp/aws` **6.66.0** et fournisseur `hashicorp/local` **2.9.1**. Les verrous contiennent les empreintes officielles vérifiées pour macOS ARM64 et Linux AMD64. L’installateur OpenTofu vérifie une empreinte SHA-256 épinglée avant installation dans `work/bin/`.
+
+| Contrôle réellement exécuté | Résultat | Limite |
+| --- | --- | --- |
+| Formatage et validation des trois racines | Réussis | Cohérence de configuration, pas autorisation AWS |
+| Suites OpenTofu | 13 cas réussis : 2 locaux et 11 avec fournisseur AWS simulé | Aucun appel de création AWS |
+| Lecture des plans simulés réellement produits par OpenTofu | Inventaires de 6 et 20 ressources acceptés | N’atteste pas la création des ressources |
+| Cycle local complet | Création, dérive détectée avec code 2, rétablissement exact, plan sans changement, retrait et état vide | Un fichier local, pas une émulation cloud |
+| Tests des contrôles d’identité et des plans | 8 tests Node réussis | Versions et STS simulés dans ces tests ; aucune session AWS réelle |
+| Refus exercés | Compte inattendu, credentials concurrents, endpoints détournés, remplacement, plan partiel, ressource inattendue et retrait du backend | Complète la revue humaine, sans remplacer IAM |
+| Confidentialité des résumés | Attributs privés et JSON mal formé non reproduits dans les résumés | Les plans et journaux complets restent hors Git |
+
+`scripts/verify-infra.mjs` teste dans une copie temporaire, sans profils ni credentials AWS utilisables et avec l’accès aux métadonnées EC2 désactivé. Les fichiers du lecteur ne sont pas utilisés comme état de test. Les preuves sont dans `preuves/verification-infra-*/resultat.json`, avec les inventaires expurgés ; une copie de travail en échec reste disponible pour diagnostic. Le téléchargement des outils et fournisseurs nécessite Internet.
+
+Le workflow `infra.yml` rejoue ces contrôles sans compte AWS. Les résultats de la version publiée sont accessibles dans [les exécutions du jalon cloud](https://github.com/nicolashedoire/devenir-devops/actions/workflows/infra.yml) et les [notes de version](https://github.com/nicolashedoire/devenir-devops/releases). Les artefacts sont nommés `infrastructure-simulee-<SHA>` et conservés 14 jours.
+
+**Aucun réseau, bucket, rôle ou service AWS n’a été créé pour cette validation.** STS, permissions IAM, disponibilité des zones, concurrence du verrou S3, dérive réelle et inventaire après retrait restent à vérifier dans un compte de laboratoire autorisé. Aucun montant de facture AWS n’a donc été observé. Le guide distingue explicitement les commandes testées localement des résultats attendus sur AWS.
+
 ## Ce qui reste à valider
 
 - Installation et lecture des quatre guides par un débutant sur une machine propre.
 - Parcours Windows/WSL et variantes de distributions Linux.
-- Infrastructure cloud, Kubernetes/Helm/GitOps et promotion entre environnements.
+- Exécution AWS réelle du jalon 05, puis Kubernetes/Helm/GitOps et promotion entre environnements.
 - Collecte complète des métriques, logs et traces, alertes et essais de charge.
 - Authentification utilisateur, contrôle des accès et reprise sur une cible de production.
 - Plateforme en libre-service et client/serveur MCP.
@@ -50,6 +70,10 @@ npm run doctor -- --docker
 npm run check:docs
 bash scripts/verify-compose.sh
 bash scripts/backup-restore.sh
+node scripts/install-tofu.mjs
+export PATH="$PWD/work/bin:$PATH"
+npm run test:cloud-guards
+bash scripts/verify-infra.sh
 ```
 
 Les services de laboratoire restent démarrés après les scripts afin d’examiner les résultats. `docker compose down` les arrête en conservant les données. Les dossiers `preuves/` et `backups/` restent locaux et sont ignorés par Git. Les artefacts CI constituent des preuves temporaires ; leur durée de conservation figure dans le workflow.

@@ -2,7 +2,7 @@
 
 Vous faites évoluer TaskBoard à chaque étape. Les deux premiers jalons enseignent l’exécution locale avec des données temporaires. Le troisième introduit PostgreSQL et la tâche témoin à conserver jusqu’à la recette finale.
 
-**Préédition :** les guides 01–04 sont disponibles ; 05–10 restent à réaliser. Le [registre](../docs/validation.md) indique les essais réels. Aucun temps de réalisation n’est présenté comme mesuré sans observation.
+**Préédition 0.3.0 :** les guides 01–05 sont disponibles ; 06–10 restent à réaliser. Le jalon 05 comprend des tests locaux et simulés ; la création, la dérive et le retrait sur un vrai compte AWS restent à attester. Le [registre](../docs/validation.md) indique les essais réels. Aucun temps de réalisation n’est présenté comme mesuré sans observation.
 
 | Jalon | Chapitres | Preuve de passage |
 | --- | --- | --- |
@@ -21,6 +21,6 @@ Lisez l’état d’entrée. Exécutez les étapes en observant chaque résultat
 
 Les étapes suivantes ne doivent pas réinitialiser l’application pour contourner une difficulté. Si un changement de stockage est nécessaire, exportez et restaurez les données, puis comparez la tâche témoin avant toute bascule. Même titre et nouvel identifiant ne prouvent pas une conservation.
 
-Un contrat 05–10 décrit un résultat, des fichiers à construire, des incidents et les preuves exigées. Il ne fournit pas un tutoriel achevé. Les anciens exemples de `archive/legacy/` ne remplacent pas ses livrables manquants : le chart historique, notamment, fonctionne en mémoire.
+Un contrat 06–10 décrit un résultat, des fichiers à construire, des incidents et les preuves exigées. Il ne fournit pas un tutoriel achevé. Les anciens exemples de `archive/legacy/` ne remplacent pas ses livrables manquants : le chart historique, notamment, fonctionne en mémoire.
 
 L’ordre est volontaire : installation, système, persistance, livraison traçable, infrastructure, déploiement, observation, protection et reprise, recette, puis plateforme et agents. Les contrôles de sécurité de base accompagnent toutes les étapes ; l’accès public attend la recette protégée.

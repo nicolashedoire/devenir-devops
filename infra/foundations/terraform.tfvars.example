@@ -1,0 +1,8 @@
+# Valeurs fictives : conserver l'identité attendue indépendante de l'identité active.
+expected_account_id = "123456789012"
+aws_region          = "eu-west-3"
+owner               = "apprenant"
+project             = "taskboard"
+environment         = "lab"
+availability_zones  = ["eu-west-3a", "eu-west-3b"]
+vpc_cidr            = "10.42.0.0/16"

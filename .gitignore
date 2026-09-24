@@ -11,6 +11,12 @@ work/
 *.tfstate*
 .terraform/
 *.tfplan
+*.tfplan.*
+*.tfvars
+*.tfvars.json
+backend.hcl
+infra/repetition/run/
+crash.*.log
 *.pem
 *.key
 image-validation/

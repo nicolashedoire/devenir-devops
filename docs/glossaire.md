@@ -1,6 +1,6 @@
 # Glossaire français–anglais
 
-Ces 25 entrées suivent les opérations du parcours. Elles servent à reconnaître les mots dans les outils, pas à mémoriser une liste avant de commencer.
+Ces entrées suivent les opérations du parcours. Elles servent à reconnaître les mots dans les outils, pas à mémoriser une liste avant de commencer.
 
 | Terme français | Terme rencontré | Sens dans le parcours |
 | --- | --- | --- |
@@ -29,5 +29,21 @@ Ces 25 entrées suivent les opérations du parcours. Elles servent à reconnaît
 | Journal | log | Événements produits par un programme pendant son exécution |
 | Contrôle de disponibilité | readiness check | Vérification indiquant si le service peut recevoir le trafic prévu |
 | Retour arrière | rollback | Retour à une version précédente, sans restauration automatique des données |
+| Infrastructure décrite par du code | Infrastructure as Code, IaC | Configuration versionnée à partir de laquelle un outil propose et applique des changements |
+| Fournisseur | provider | Adaptateur qui traduit la configuration en appels à une API |
+| État | state | Correspondance entre les ressources du code et les objets gérés |
+| Stockage de l’état | backend | Mécanisme de conservation de l’état, local ou distant |
+| Plan | plan | Proposition de changements à examiner avant application |
+| Application du plan | apply | Exécution des actions proposées ; peut créer, modifier ou supprimer |
+| Dérive | drift | Différence apparue entre configuration, état et ressource observée |
+| Verrou d’état | state lock | Protection contre les écritures concurrentes normales dans le même état |
+| Amorçage | bootstrap | Création des prérequis nécessaires pour gérer le reste, ici le stockage S3 |
+| Région / zone de disponibilité | region / Availability Zone, AZ | Région cloud et implantation isolée au sein de cette région |
+| Sous-réseau | subnet | Portion du réseau à laquelle des ressources peuvent être attachées |
+| Table de routage | route table | Règles déterminant vers où diriger les paquets réseau |
+| Groupe de sécurité | security group | Ensemble de règles de filtrage associé aux interfaces de ressources AWS |
+| Session de rôle | assumed-role session | Identité temporaire qui emprunte les droits d’un rôle autorisé |
+| Contrôle préalable | preflight check | Vérification de contexte avant une opération ; ne réalise pas le déploiement |
+| Fournisseur simulé | mock provider | Remplacement des appels réels pour tester la configuration sans créer les ressources distantes |
 
 Quelques messages à reconnaître : `command not found` signifie « programme introuvable » ; `connection refused`, « connexion refusée » ; `address already in use`, « adresse et port déjà occupés » ; `permission denied`, « autorisation manquante ». Notez la commande et le contexte avant d’en déduire une correction.

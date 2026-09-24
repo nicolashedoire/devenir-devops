@@ -12,7 +12,9 @@
     "doctor": "node scripts/check-env.mjs",
     "check:docs": "node scripts/check-docs.mjs",
     "verify:compose": "bash scripts/verify-compose.sh",
-    "verify:restore": "bash scripts/backup-restore.sh"
+    "verify:restore": "bash scripts/backup-restore.sh",
+    "test:cloud-guards": "node --test scripts/cloud-guards.test.mjs",
+    "verify:infra": "bash scripts/verify-infra.sh"
   },
   "dependencies": { "pg": "8.16.3" }
 }

@@ -1,0 +1,107 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1600" height="1120" viewBox="0 0 1600 1120" role="img" aria-labelledby="title desc">
+  <title id="title">Le cycle OpenTofu : observer, comparer, appliquer</title>
+  <desc id="desc">Le plan compare le code désiré, l’état S3 et les ressources observées via le fournisseur AWS. Après relecture, appliquer le plan fait agir le fournisseur sur AWS et actualise l’état dans le même backend S3. L’état versionné et verrouillé décrit l’infrastructure ; il ne sauvegarde pas les données PostgreSQL.</desc>
+  <defs>
+    <marker id="arrow" viewBox="0 0 12 12" refX="10" refY="6" markerWidth="10" markerHeight="10" orient="auto-start-reverse"><path d="M 2 2 L 10 6 L 2 10" fill="none" stroke="#476875" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></marker>
+    <marker id="arrow-teal" viewBox="0 0 12 12" refX="10" refY="6" markerWidth="10" markerHeight="10" orient="auto"><path d="M 2 2 L 10 6 L 2 10" fill="none" stroke="#147d83" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></marker>
+    <style>
+      text { font-family: Arial, Helvetica, sans-serif; fill: #183b4a; }
+      .title { font-size: 44px; font-weight: 700; }
+      .subtitle { font-size: 26px; fill: #526c77; }
+      .heading { font-size: 30px; font-weight: 700; }
+      .body { font-size: 25px; }
+      .small { font-size: 23px; fill: #526c77; }
+      .overline { font-size: 22px; letter-spacing: 1.7px; font-weight: 700; fill: #526c77; }
+      .line { fill: none; stroke: #476875; stroke-width: 3; stroke-linecap: round; stroke-linejoin: round; }
+      .action { fill: none; stroke: #147d83; stroke-width: 3.5; stroke-linecap: round; stroke-linejoin: round; }
+    </style>
+  </defs>
+  <rect width="1600" height="1120" fill="#ffffff"/>
+  <text class="overline" x="70" y="48">DEVENIR DEVOPS · JALON 05</text>
+  <text class="title" x="70" y="107">Observer, comparer, appliquer</text>
+  <text class="subtitle" x="70" y="149">Le code fixe la cible. Le plan propose les actions. L’état relie le code aux ressources.</text>
+
+  <!-- Les trois entrées du calcul du plan. -->
+  <g id="configuration-desiree">
+    <rect x="80" y="210" width="380" height="180" rx="16" fill="#f4f7f8" stroke="#cedade" stroke-width="2"/>
+    <rect x="80" y="210" width="380" height="8" rx="4" fill="#183b4a"/>
+    <text class="heading" x="108" y="260">Code désiré</text>
+    <text class="body" x="108" y="306">Ressources et variables</text>
+    <text class="body" x="108" y="345">Versions fixées dans Git</text>
+  </g>
+  <g id="etat-lu">
+    <rect x="610" y="210" width="380" height="180" rx="16" fill="#edf7f7" stroke="#87b8bc" stroke-width="2"/>
+    <rect x="610" y="210" width="380" height="8" rx="4" fill="#147d83"/>
+    <text class="heading" x="638" y="260">État S3 versionné</text>
+    <text class="body" x="638" y="306">Relie code et objets AWS</text>
+    <text class="body" x="638" y="345">Verrou d’écriture natif S3</text>
+  </g>
+  <g id="infrastructure-observee">
+    <rect x="1140" y="210" width="380" height="180" rx="16" fill="#f4f7f8" stroke="#cedade" stroke-width="2"/>
+    <rect x="1140" y="210" width="380" height="8" rx="4" fill="#183b4a"/>
+    <text class="heading" x="1168" y="260">Infrastructure AWS</text>
+    <text class="body" x="1168" y="306">Ressources observées</text>
+    <text class="small" x="1168" y="345">Lecture via le provider AWS</text>
+  </g>
+
+  <!-- Jonction explicite des lectures : aucun changement de ressource ici. -->
+  <path class="line" d="M 270 390 V 439 H 800"/>
+  <path class="line" d="M 1330 390 V 439 H 800"/>
+  <path class="line" d="M 800 390 V 493" marker-end="url(#arrow)"/>
+  <circle cx="800" cy="439" r="5" fill="#476875"/>
+
+  <g id="plan">
+    <rect x="580" y="500" width="440" height="184" rx="18" fill="#183b4a"/>
+    <text x="800" y="546" text-anchor="middle" style="font-size:31px;font-weight:700;fill:#ffffff">1 · Planifier</text>
+    <text x="800" y="586" text-anchor="middle" style="font-size:25px;fill:#e0ecee">Comparer et proposer les actions</text>
+    <rect x="608" y="614" width="114" height="44" rx="8" fill="#e5f3f3"/>
+    <rect x="743" y="614" width="114" height="44" rx="8" fill="#e5f3f3"/>
+    <rect x="878" y="614" width="114" height="44" rx="8" fill="#e5f3f3"/>
+    <text class="body" x="665" y="644" text-anchor="middle">Créer</text>
+    <text class="body" x="800" y="644" text-anchor="middle">Modifier</text>
+    <text class="body" x="935" y="644" text-anchor="middle">Retirer</text>
+  </g>
+  <g id="controle-avant-plan">
+    <text class="overline" x="108" y="530">AVANT LE PLAN</text>
+    <text class="body" x="108" y="574">Compte et profil vérifiés</text>
+    <text class="body" x="108" y="614">Backend et clé contrôlés</text>
+    <text class="body" x="108" y="654">Verrou conservé</text>
+  </g>
+  <g id="limite-du-plan">
+    <text class="overline" x="1168" y="530">LE PLAN NE DÉPLOIE PAS</text>
+    <text class="body" x="1168" y="574">Il lit l’existant et décrit</text>
+    <text class="body" x="1168" y="614">les changements proposés.</text>
+    <text class="small" x="1168" y="654">Le fichier enregistré est sensible.</text>
+  </g>
+
+  <path class="line" d="M 800 684 V 721"/>
+  <rect x="650" y="710" width="300" height="47" rx="24" fill="#fbf0e8" stroke="#d9b59b" stroke-width="1.5"/>
+  <text x="800" y="741" text-anchor="middle" style="font-size:25px;font-weight:700;fill:#945427">Relire le plan précis</text>
+  <path class="line" d="M 800 757 V 792" marker-end="url(#arrow)"/>
+
+  <g id="application-du-plan">
+    <rect x="580" y="800" width="440" height="152" rx="18" fill="#edf7f7" stroke="#147d83" stroke-width="2.5"/>
+    <text class="heading" x="800" y="846" text-anchor="middle">2 · Appliquer ce plan</text>
+    <text class="body" x="800" y="888" text-anchor="middle">Exécuter les actions relues</text>
+    <text class="small" x="800" y="925" text-anchor="middle">Actualiser l’état sous verrou</text>
+  </g>
+  <g id="etat-actualise">
+    <rect x="80" y="800" width="380" height="152" rx="16" fill="#edf7f7" stroke="#87b8bc" stroke-width="2"/>
+    <text class="heading" x="108" y="846">État S3 actualisé</text>
+    <text class="body" x="108" y="888">Même backend, même clé</text>
+    <text class="small" x="108" y="925">Nouvelle version de l’état</text>
+  </g>
+  <g id="provider-application">
+    <rect x="1140" y="800" width="380" height="152" rx="16" fill="#f4f7f8" stroke="#cedade" stroke-width="2"/>
+    <text class="heading" x="1168" y="846">Provider AWS</text>
+    <text class="body" x="1168" y="888">Agit sur les ressources</text>
+    <text class="small" x="1168" y="925">Crée · modifie · retire</text>
+  </g>
+  <path class="action" d="M 580 875 H 468" marker-end="url(#arrow-teal)"/>
+  <path class="action" d="M 1020 875 H 1132" marker-end="url(#arrow-teal)"/>
+  <path class="action" d="M 1520 875 H 1560 V 302 H 1527" marker-end="url(#arrow-teal)"/>
+  <text class="small" x="800" y="991" text-anchor="middle">L’exécution suivante relit l’état et les ressources : un nouvel écart produit un nouveau plan.</text>
+
+  <rect x="70" y="1030" width="1460" height="62" rx="10" fill="#f4f7f8"/>
+  <text x="800" y="1069" text-anchor="middle" style="font-size:25px;font-weight:700">L’état décrit l’infrastructure. Une sauvegarde PostgreSQL protège les données de TaskBoard.</text>
+</svg>

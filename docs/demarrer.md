@@ -39,11 +39,11 @@ Choisissez un dossier où vous pouvez écrire, puis :
 ```sh
 git clone https://github.com/nicolashedoire/devenir-devops.git
 cd devenir-devops
-git switch --detach v0.2.0
+git switch --detach v0.3.0
 npm run doctor
 ```
 
-La référence stable `v0.2.0` est recommandée pour suivre cette préédition. `main` est la branche de développement et peut recevoir des changements ultérieurs. Le mode détaché (*detached HEAD*) place les fichiers sur une version précise ; ce message Git n’est pas une erreur. Au jalon 02, vous créerez une branche pour vos propres commits. Ne limitez pas la profondeur du clone : les exercices utilisent l’historique.
+La référence figée `v0.3.0` est recommandée pour suivre cette préédition du parcours. `main` est la branche de développement et peut recevoir des changements ultérieurs. Le mode détaché (*detached HEAD*) place les fichiers sur une version précise ; ce message Git n’est pas une erreur. Au jalon 02, vous créerez une branche pour vos propres commits. Ne limitez pas la profondeur du clone : les exercices utilisent l’historique.
 
 `doctor` effectue un diagnostic en lecture seule : il ne télécharge rien, ne démarre pas de conteneur et ne modifie pas la machine. `npm run doctor -- --docker` exige aussi un moteur Docker accessible. L’option `--json` produit une sortie structurée.
 
