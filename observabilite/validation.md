@@ -47,6 +47,14 @@ Un contrôle Node local, sans Docker, a aussi utilisé un récepteur OTLP de tes
 
 Le générateur de trafic de la CI n’exporte pas de span client HTTP. Le parentage démontré de la chaîne stockée est **serveur HTTP → client PostgreSQL**. Les décisions d’échantillonnage d’un parent entrant sont respectées.
 
+## Panne du Collector exécutée en CI
+
+La [recette complémentaire 36012870701](https://github.com/nicolashedoire/devenir-devops/actions/runs/36012870701) a réussi sur le commit `787f00d2a345be5e371e934f34ecdc06e065bc74`, sous Linux AMD64. Elle rejoue la chaîne complète puis lance `bash scripts/verify-observability-collector.sh`. Le script termine avec un code nul et la preuve `preuves/collector-ETl1jA/resultat.json` de l’artefact porte `statut: valide`.
+
+Le Collector ciblé est identifié par son projet et son service Compose, puis son arrêt est confirmé. Pendant cette interruption, l’API normale répond 200 avec le témoin strictement identique ; Prometheus conserve `up=1` et son compteur de lectures métier passe de 44 à 49. La trace et le journal d’une requête produite après l’arrêt ne sont pas présents dans Tempo et Loki pendant le contrôle. Le Collector est ensuite redémarré ; une nouvelle lecture produit à nouveau une trace et un journal corrélés, avec le parentage HTTP → SQL vérifié.
+
+Cette preuve couvre une panne courte et le retour de nouveaux exports. Elle ne garantit ni le rattrapage de toutes les données émises pendant l’arrêt, ni leur conservation après saturation ou redémarrage des files en mémoire. Le test tente la reprise du Collector dans sa phase de sortie, y compris lorsqu’un contrôle échoue. Il ne modifie pas la source PostgreSQL ni les volumes.
+
 ## Limites conservées dans la preuve
 
-Le scénario d’arrêt manuel du Collector décrit dans le guide reste un exercice à rejouer ; il n’est pas inclus dans le verdict CI ci-dessus. La configuration du lien Grafana est vérifiée par son API, sans prétendre à une validation visuelle interactive de chaque panneau. Aucune notification externe, charge de production, haute disponibilité, exposition publique ou restauration des backends de télémétrie n’a été validée.
+ La configuration du lien Grafana est vérifiée par son API, sans prétendre à une validation visuelle interactive de chaque panneau. Aucune notification externe, charge de production, haute disponibilité, exposition publique ou restauration des backends de télémétrie n’a été validée.

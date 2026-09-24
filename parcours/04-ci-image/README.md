@@ -32,13 +32,31 @@ Le traitement `validate` installe les dépendances verrouillées, contrôle l’
 
 Le nettoyage de CI arrête son propre projet Compose. Le laboratoire du lecteur n’est pas sa cible. Les bases de test du système d’exécution (*runner*) ne constituent pas un stockage durable du parcours.
 
-## Étape 3 — Publier uniquement après validation
+## Étape 3 — Choisir le circuit de publication adapté
 
-La publication est distincte : dans **Actions → Vérifier le parcours TaskBoard → Run workflow**, la personne autorisée choisit `main` et active `publish_image`. Sans cette option, l’image n’est pas publiée ; c’est le fonctionnement attendu.
+La publication est distincte : dans **Actions → Vérifier le parcours TaskBoard → Run workflow**, la personne autorisée choisit `main` et active `publish_image`. Sans cette option, l’image n’est pas publiée ; c’est le fonctionnement attendu. Ce circuit `ci.yml` construit et vérifie **uniquement Linux AMD64**.
 
 La chaîne conserve l’image testée sous forme d’artefact, puis la transmet au traitement `publish`, qui la charge et la publie **sans la reconstruire**. Le registre du dépôt de référence est `ghcr.io/nicolashedoire/devenir-devops`. L’étiquette (*tag*) publiée est `sha-<commit-complet>` ; aucun `latest` n’est utilisé. Dans une copie du dépôt, le propriétaire du registre est celui de cette copie.
 
 La sortie de publication fournit une référence `ghcr.io/...@sha256:...`. Recopiez la valeur complète observée, et non les points de suspension. L’artefact `publication-<SHA>` conserve `image-digest.txt` et `revision.txt`. Comparez ce dernier au commit de l’exécution. L’empreinte (*digest*) identifie le contenu ; le tag est une référence lisible qui pourrait être déplacée.
+
+### Pour le parcours AMD64 et ARM64, puis la promotion GitOps
+
+Le circuit recommandé pour une image destinée aux deux architectures est `.github/workflows/image-multiarch.yml`. Dans **Actions → Publier une image vérifiée sur deux architectures → Run workflow**, choisissez `main`. Ce workflow n’expose pas de paramètre `publish_image` : le lancement manuel autorisé déclenche la validation puis, si elle réussit, la publication.
+
+1. Les traitements `validate` exécutent les tests, PostgreSQL, la persistance et la restauration sur les systèmes AMD64 et ARM64.
+2. Chacun conserve **son image testée** dans `image-<architecture>-<SHA>`. Les traitements `publish` chargent et publient ces contenus sans reconstruction, sous `sha-<SHA>-amd64` et `sha-<SHA>-arm64`.
+3. Le traitement `manifest` réunit les deux digests dans un index, sous `multi-<SHA>`. L’artefact `publication-multiarch-<SHA>` contient `image-digest.txt`, `revision.txt`, le manifeste et son inspection. C’est la référence complète de cet index qu’il faut relever pour la suite du parcours.
+
+Un index regroupe des images : il n’ajoute pas une architecture qui n’a pas été construite et testée. Vérifiez que les deux validations ont réussi sur le même commit. Pour créer l’image B d’un exercice GitOps, enregistrez votre modification dans votre propre dépôt, lancez ce circuit, puis conservez le nouveau digest et les preuves. Aucun lancement sur le dépôt de l’auteur n’est requis pour lire le livre.
+
+Pour employer directement l’image A de l’édition, affichez sa référence et le lien de preuve déjà fournis :
+
+```sh
+node --input-type=module -e 'import fs from "node:fs"; const r=JSON.parse(fs.readFileSync("deploy/image-reference.json")); console.log(`${r.repository}@${r.digest}`); console.log(r.validation)'
+```
+
+Cette lecture ne publie ni ne déploie rien. Recopiez la première ligne à l’étape suivante, ou utilisez l’index B obtenu par votre propre exécution.
 
 **La visibilité du paquet GHCR est distincte de celle du dépôt GitHub.** Pour permettre le téléchargement anonyme de l’image pédagogique, son mainteneur doit vérifier les paramètres de visibilité du paquet et le rendre public. Un dépôt public ne garantit pas à lui seul cet accès. Un refus de téléchargement peut donc provenir des permissions du paquet, même si sa construction a réussi ; voir les [règles du registre GitHub](https://docs.github.com/en/packages/working-with-a-github-packages-registry/working-with-the-container-registry).
 
@@ -53,7 +71,7 @@ docker image inspect "$TASKBOARD_IMAGE" \
   --format '{{.Architecture}} {{index .Config.Labels "org.opencontainers.image.revision"}}'
 ```
 
-La commande `read` attend votre saisie sur la ligne suivante. Le label de révision doit correspondre au commit ; il complète le lien fourni par l’exécution de CI, sans constituer une signature cryptographique. La CI de référence construit sur Linux AMD64. Une machine ARM doit disposer d’une exécution compatible pour lancer cette image ; télécharger l’image n’établit pas cette compatibilité.
+La commande `read` attend votre saisie sur la ligne suivante. Le label de révision doit correspondre au commit ; il complète le lien fourni par l’exécution de CI, sans constituer une signature cryptographique. L’image issue de `ci.yml` nécessite AMD64 ou une émulation explicitement vérifiée. Celle issue de `image-multiarch.yml` comporte les variantes AMD64 et ARM64 ; le moteur choisit celle de la machine. Télécharger l’image n’établit pas à lui seul sa capacité à démarrer.
 
 Pour utiliser cette image avec votre PostgreSQL existant, préparez un remplacement Compose local :
 
@@ -69,7 +87,7 @@ YAML
 docker compose -f compose.yaml -f preuves/image-publiee.yaml up -d --no-build
 ```
 
-La référence saisie doit être celle du dépôt TaskBoard attendu. Cette opération conserve la définition de `db` et son volume. Attendez `/readyz` à 200, lisez `/version` et comparez la tâche canonique avec **uniquement le bloc Node de comparaison** du [corrigé du jalon 03](../03-docker-postgresql/corrige.md). Ne rejouez pas ses commandes Compose : toutes les opérations Compose de cette étape doivent conserver les deux options `-f` pour utiliser l’image publiée. Vous avez alors relié image publiée, réponse applicative et conservation d’une donnée. La promotion entre environnements via GitOps reste le contrat du jalon 06.
+La référence saisie doit être celle du dépôt TaskBoard attendu. Cette opération conserve la définition de `db` et son volume. Attendez `/readyz` à 200, lisez `/version` et comparez la tâche canonique avec **uniquement le bloc Node de comparaison** du [corrigé du jalon 03](../03-docker-postgresql/corrige.md). Ne rejouez pas ses commandes Compose : toutes les opérations Compose de cette étape doivent conserver les deux options `-f` pour utiliser l’image publiée. Vous avez alors relié image publiée, réponse applicative et conservation d’une donnée. La promotion entre environnements via GitOps se pratique au [jalon 06](../06-kubernetes-helm-gitops/README.md).
 
 ## Incident contrôlé — Un test doit empêcher une livraison
 
@@ -99,4 +117,4 @@ Arrêtez votre laboratoire avec `docker compose -f compose.yaml -f preuves/image
 
 Pourquoi reconstruire une image après les tests fragilise-t-il le lien de preuve ? Quels trois identifiants permettent de relier les tests, l’image du registre et `/version` ? Expliquez aussi pourquoi revenir à une image précédente ne restaure pas automatiquement PostgreSQL.
 
-[Corrigé séparé](corrige.md) · [Contrat du jalon suivant](../05-cloud-opentofu/README.md)
+[Corrigé séparé](corrige.md) · [Jalon suivant](../05-cloud-opentofu/README.md)
