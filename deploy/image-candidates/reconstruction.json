@@ -1,0 +1,12 @@
+{
+  "repository": "ghcr.io/nicolashedoire/devenir-devops",
+  "digest": "sha256:bf5a8ddbeddf5eeedfba3194b7743120640f341c87173978e297709a288b4977",
+  "revision": "0e1766c9b704867bf878437b9bdb3b091e30b1c1",
+  "version": "0.2.0",
+  "validation": "https://github.com/nicolashedoire/devenir-devops/actions/runs/36006797979",
+  "architectures": [
+    "amd64",
+    "arm64"
+  ],
+  "note": "Reconstruction vérifiée ; code métier équivalent à la référence initiale. L’exercice porte sur l’identité de livraison."
+}

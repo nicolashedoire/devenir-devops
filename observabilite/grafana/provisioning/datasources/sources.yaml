@@ -18,7 +18,8 @@ datasources:
         - name: TraceID
           matcherRegex: '"trace_id":"([a-f0-9]{32})"'
           datasourceUid: tempo
-          url: '${__value.raw}'
+          # Doubler $ protège le placeholder contre l'expansion d'environnement Grafana.
+          url: '$${__value.raw}'
           urlDisplayLabel: Ouvrir la trace
   - name: Tempo
     uid: tempo

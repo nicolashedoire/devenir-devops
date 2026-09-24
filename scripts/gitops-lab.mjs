@@ -7,6 +7,9 @@ const action = process.argv[2];
 const args = process.argv.slice(3);
 const index = args.indexOf('--repo');
 const repository = index < 0 ? 'https://github.com/nicolashedoire/devenir-devops.git' : args[index + 1];
+const revisionIndex = args.indexOf('--revision');
+const revision = revisionIndex < 0 ? 'main' : args[revisionIndex + 1];
+if (!/^[A-Za-z0-9][A-Za-z0-9._/-]{0,150}$/.test(revision)) throw new Error('Révision Git invalide.');
 if (!/^https:\/\/github\.com\/[A-Za-z0-9_.-]+\/devenir-devops(?:\.git)?$/.test(repository)) throw new Error('Fournir l’URL HTTPS GitHub de votre fork devenir-devops, sans identifiant ni jeton.');
 guard();
 await mkdir(work, { recursive: true });
@@ -33,6 +36,7 @@ if (action === 'install') {
   for (const name of ['recette', 'production']) {
     const app = JSON.parse(await readFile(path.join(root, `deploy/gitops/apps/${name}.json`)));
     app.spec.source.repoURL = repository;
+    app.spec.source.targetRevision = revision;
     run('kubectl', ['apply', '-f', '-'], { input: JSON.stringify(app) });
     // Après un import Helm, les ressources peuvent déjà être identiques :
     // Synced seul ne prouve ni l'adoption ni l'exécution du hook de migration.
@@ -48,4 +52,4 @@ if (action === 'install') {
     const app = JSON.parse(kube('get', 'application', '-n', 'argocd', `taskboard-${name}`, '-o', 'json'));
     console.log(`${name} : ${app.status.sync.status}, ${app.status.health.status}, commit ${app.status.sync.revision}`);
   }
-} else throw new Error('Usage : node scripts/gitops-lab.mjs install [--repo URL_DU_FORK] | verify');
+} else throw new Error('Usage : node scripts/gitops-lab.mjs install [--repo URL_DU_FORK] [--revision BRANCHE] | verify');
