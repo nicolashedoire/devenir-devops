@@ -1,0 +1,51 @@
+name: Vérifier le jalon cloud sans compte AWS
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+defaults:
+  run:
+    shell: bash
+
+concurrency:
+  group: infrastructure-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  infrastructure:
+    name: Répétition locale, plans et fournisseurs simulés
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    steps:
+      - name: Récupérer la révision à vérifier
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - name: Préparer Node.js
+        uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
+        with:
+          node-version-file: .node-version
+      - name: Installer OpenTofu avec empreinte vérifiée
+        run: |
+          node scripts/install-tofu.mjs
+          printf '%s\n' "$GITHUB_WORKSPACE/work/bin" >> "$GITHUB_PATH"
+      - name: Vérifier les refus et la confidentialité des contrôles
+        run: node --test scripts/cloud-guards.test.mjs
+      - name: Vérifier les configurations et rejouer la dérive locale
+        run: bash scripts/verify-infra.sh
+      - name: Vérifier les liens de la documentation
+        run: node scripts/check-docs.mjs
+      - name: Conserver les preuves locales et simulées
+        if: always()
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        with:
+          name: infrastructure-simulee-${{ github.sha }}
+          path: preuves/verification-infra-*/
+          retention-days: 14
+          if-no-files-found: warn
