@@ -25,6 +25,8 @@ jobs:
           node --input-type=module -e "import fs from 'node:fs';const dirs=fs.readdirSync('preuves').filter(n=>n.startsWith('verify-compose-')).sort();fs.copyFileSync('preuves/'+dirs.at(-1)+'/tache-temoin.json','preuves/tache-temoin.json');"
       - name: Livrer le modèle sans reconstruire et relire la preuve par MCP
         run: node scripts/verify-platform-delivery.mjs
+      - name: Changer le port puis revenir à l’offre initiale
+        run: node scripts/verify-platform-switch.mjs
       - name: Conserver les preuves expurgées
         if: always()
         uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
