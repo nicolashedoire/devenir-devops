@@ -1,0 +1,82 @@
+{{- if .Values.migration.enabled }}
+apiVersion: batch/v1
+kind: Job
+metadata:
+  {{- if eq .Values.migration.mode "argocd" }}
+  name: {{ include "taskboard.name" . }}-migrate
+  {{- else }}
+  name: {{ include "taskboard.name" . }}-migrate-r{{ .Release.Revision }}
+  {{- end }}
+  labels:
+    {{- include "taskboard.labels" . | nindent 4 }}
+    app.kubernetes.io/component: migration
+  annotations:
+    argocd.argoproj.io/sync-wave: "0"
+    {{- if eq .Values.migration.mode "argocd" }}
+    argocd.argoproj.io/hook: Sync
+    argocd.argoproj.io/hook-delete-policy: BeforeHookCreation
+    {{- end }}
+spec:
+  backoffLimit: 3
+  activeDeadlineSeconds: 600
+  template:
+    metadata:
+      labels:
+        {{- include "taskboard.selector" . | nindent 8 }}
+        app.kubernetes.io/component: migration
+      annotations:
+        checksum/startup: {{ include (print $.Template.BasePath "/startup-config.yaml") . | sha256sum }}
+    spec:
+      serviceAccountName: {{ include "taskboard.name" . }}
+      automountServiceAccountToken: false
+      restartPolicy: Never
+      terminationGracePeriodSeconds: 15
+      securityContext:
+        runAsNonRoot: true
+        runAsUser: 1000
+        runAsGroup: 1000
+        fsGroup: 1000
+        seccompProfile:
+          type: RuntimeDefault
+      initContainers:
+        - name: database-ready
+          image: {{ include "taskboard.image" . | quote }}
+          imagePullPolicy: {{ .Values.image.pullPolicy }}
+          command: ["node", "/app/checks/startup-check.mjs", "database"]
+          env:
+            {{- include "taskboard.databaseEnv" . | nindent 12 }}
+          securityContext:
+            {{- include "taskboard.containerSecurity" . | nindent 12 }}
+          resources:
+            {{- toYaml .Values.migration.resources | nindent 12 }}
+          volumeMounts:
+            - name: startup-check
+              mountPath: /app/checks
+              readOnly: true
+            - name: tmp
+              mountPath: /tmp
+      containers:
+        - name: migrate
+          image: {{ include "taskboard.image" . | quote }}
+          imagePullPolicy: {{ .Values.image.pullPolicy }}
+          command: ["npm", "run", "migrate"]
+          env:
+            - name: npm_config_cache
+              value: /tmp/npm-cache
+            - name: npm_config_update_notifier
+              value: "false"
+            {{- include "taskboard.databaseEnv" . | nindent 12 }}
+          securityContext:
+            {{- include "taskboard.containerSecurity" . | nindent 12 }}
+          resources:
+            {{- toYaml .Values.migration.resources | nindent 12 }}
+          volumeMounts:
+            - name: tmp
+              mountPath: /tmp
+      volumes:
+        - name: startup-check
+          configMap:
+            name: {{ include "taskboard.name" . }}-startup
+        - name: tmp
+          emptyDir: {}
+{{- end }}

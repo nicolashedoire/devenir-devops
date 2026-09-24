@@ -1,0 +1,51 @@
+# Fournir l'empreinte réellement publiée : aucun tag mutable n'est accepté.
+image:
+  repository: ghcr.io/nicolashedoire/devenir-devops
+  digest: ""
+  pullPolicy: IfNotPresent
+
+# 0 suspend l'application pendant un import ; 2 est le fonctionnement normal.
+replicaCount: 2
+
+database:
+  # Secret PRÉEXISTANT dans le namespace. Il n'est jamais créé par ce chart.
+  # Clés : POSTGRES_USER, POSTGRES_PASSWORD, POSTGRES_DB, DATABASE_URL.
+  existingSecret: ""
+
+postgresql:
+  image:
+    repository: docker.io/library/postgres
+    digest: sha256:f4c66b820c6f974249089d3d16d86a3698eae11e8746eb6644b2271031e91232
+    pullPolicy: IfNotPresent
+  persistence:
+    size: 1Gi
+    # null utilise la StorageClass par défaut ; "" demande un volume sans classe.
+    storageClassName: null
+  resources:
+    requests:
+      cpu: 100m
+      memory: 256Mi
+    limits:
+      cpu: "1"
+      memory: 512Mi
+
+migration:
+  # Import initial : false AVEC replicaCount=0, puis réactiver après restauration.
+  enabled: true
+  # helm : Job normal ; argocd : hook Sync après disponibilité de PostgreSQL.
+  mode: helm
+  resources:
+    requests:
+      cpu: 100m
+      memory: 64Mi
+    limits:
+      cpu: 500m
+      memory: 256Mi
+
+resources:
+  requests:
+    cpu: 100m
+    memory: 64Mi
+  limits:
+    cpu: 500m
+    memory: 256Mi

@@ -1,0 +1,11 @@
+{
+  "repository": "ghcr.io/nicolashedoire/devenir-devops",
+  "digest": "sha256:12ea642202176da67ad6f4244f8ec01840db11b0a883ca39304a281c2d749d63",
+  "revision": "819be000ad7499955a5772eaa847b275ba52c8b2",
+  "version": "0.2.0",
+  "validation": "https://github.com/nicolashedoire/devenir-devops/actions/runs/36002965038",
+  "architectures": [
+    "amd64",
+    "arm64"
+  ]
+}

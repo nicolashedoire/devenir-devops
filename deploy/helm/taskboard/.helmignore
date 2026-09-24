@@ -1,0 +1,6 @@
+.DS_Store
+*.tfstate
+*.tfplan
+*.local.yaml
+*.local.yml
+tests/

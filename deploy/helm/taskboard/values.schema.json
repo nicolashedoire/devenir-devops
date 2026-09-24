@@ -1,0 +1,67 @@
+{
+  "$schema": "https://json-schema.org/draft-07/schema#",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["image", "replicaCount", "database", "postgresql", "migration", "resources"],
+  "properties": {
+    "image": {"$ref": "#/definitions/image"},
+    "replicaCount": {"type": "integer", "minimum": 0, "maximum": 4},
+    "database": {
+      "type": "object", "additionalProperties": false, "required": ["existingSecret"],
+      "properties": {
+        "existingSecret": {"type": "string", "minLength": 1, "maxLength": 253, "pattern": "^[a-z0-9]([a-z0-9.-]*[a-z0-9])?$"}
+      }
+    },
+    "postgresql": {
+      "type": "object", "additionalProperties": false,
+      "required": ["image", "persistence", "resources"],
+      "properties": {
+        "image": {"$ref": "#/definitions/image"},
+        "persistence": {
+          "type": "object", "additionalProperties": false, "required": ["size"],
+          "properties": {
+            "size": {"type": "string", "pattern": "^[1-9][0-9]*(Mi|Gi)$"},
+            "storageClassName": {"type": ["string", "null"], "maxLength": 253}
+          }
+        },
+        "resources": {"$ref": "#/definitions/resources"}
+      }
+    },
+    "migration": {
+      "type": "object", "additionalProperties": false,
+      "required": ["enabled", "mode", "resources"],
+      "properties": {
+        "enabled": {"type": "boolean"},
+        "mode": {"type": "string", "enum": ["helm", "argocd"]},
+        "resources": {"$ref": "#/definitions/resources"}
+      }
+    },
+    "resources": {"$ref": "#/definitions/resources"}
+  },
+  "definitions": {
+    "image": {
+      "type": "object", "additionalProperties": false,
+      "required": ["repository", "digest", "pullPolicy"],
+      "properties": {
+        "repository": {"type": "string", "pattern": "^[a-z0-9][a-z0-9.-]*(:[0-9]+)?/[a-z0-9]+([._/-][a-z0-9]+)*$"},
+        "digest": {"type": "string", "pattern": "^sha256:[a-f0-9]{64}$"},
+        "pullPolicy": {"type": "string", "enum": ["IfNotPresent", "Always"]}
+      }
+    },
+    "resources": {
+      "type": "object", "additionalProperties": false,
+      "required": ["requests", "limits"],
+      "properties": {
+        "requests": {"$ref": "#/definitions/quantities"},
+        "limits": {"$ref": "#/definitions/quantities"}
+      }
+    },
+    "quantities": {
+      "type": "object", "additionalProperties": false, "required": ["cpu", "memory"],
+      "properties": {
+        "cpu": {"type": "string", "pattern": "^[1-9][0-9]*(m)?$"},
+        "memory": {"type": "string", "pattern": "^[1-9][0-9]*(Mi|Gi)$"}
+      }
+    }
+  }
+}

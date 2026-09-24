@@ -1,0 +1,55 @@
+{
+  "apiVersion": "argoproj.io/v1alpha1",
+  "kind": "AppProject",
+  "metadata": {
+    "name": "taskboard",
+    "namespace": "argocd"
+  },
+  "spec": {
+    "description": "Deux laboratoires TaskBoard locaux, sans ressource cloud.",
+    "sourceRepos": [
+      "https://github.com/nicolashedoire/devenir-devops.git"
+    ],
+    "destinations": [
+      {
+        "namespace": "taskboard-recette",
+        "server": "https://kubernetes.default.svc"
+      },
+      {
+        "namespace": "taskboard-production",
+        "server": "https://kubernetes.default.svc"
+      }
+    ],
+    "clusterResourceWhitelist": [],
+    "namespaceResourceWhitelist": [
+      {
+        "group": "",
+        "kind": "Service"
+      },
+      {
+        "group": "",
+        "kind": "ServiceAccount"
+      },
+      {
+        "group": "",
+        "kind": "ConfigMap"
+      },
+      {
+        "group": "",
+        "kind": "PersistentVolumeClaim"
+      },
+      {
+        "group": "apps",
+        "kind": "Deployment"
+      },
+      {
+        "group": "apps",
+        "kind": "StatefulSet"
+      },
+      {
+        "group": "batch",
+        "kind": "Job"
+      }
+    ]
+  }
+}

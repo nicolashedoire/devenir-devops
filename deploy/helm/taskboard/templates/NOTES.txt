@@ -1,0 +1,10 @@
+TaskBoard est installé dans le namespace {{ .Release.Namespace }}.
+
+1. Vérifier le StatefulSet {{ include "taskboard.name" . }}-postgres et le Job de migration.
+2. Vérifier le Deployment {{ include "taskboard.name" . }}-api et ses {{ .Values.replicaCount }} répliques.
+3. Accès local, lorsque l'API est prête :
+   kubectl -n {{ .Release.Namespace }} port-forward --address 127.0.0.1 svc/{{ include "taskboard.name" . }}-api 3000:3000
+
+Le PVC data-{{ include "taskboard.name" . }}-postgres-0 est conservé lors d'une désinstallation de la release.
+La suppression du namespace, du PVC ou du cluster reste destructrice. Sauvegarder avant ces actions.
+Aucune authentification utilisateur n'est fournie : garder cet atelier local.

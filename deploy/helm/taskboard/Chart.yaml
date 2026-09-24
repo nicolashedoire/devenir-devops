@@ -1,0 +1,7 @@
+apiVersion: v2
+name: taskboard
+description: Laboratoire local TaskBoard avec PostgreSQL persistant et migration séparée
+type: application
+version: 0.1.0
+appVersion: "0.2.0"
+kubeVersion: ">=1.32.0-0"
