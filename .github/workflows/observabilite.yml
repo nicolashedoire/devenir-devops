@@ -28,6 +28,8 @@ jobs:
             observabilite/imports-ci/tache-temoin.json
       - name: Vérifier le parcours métriques, journaux, traces et alertes
         run: bash scripts/verify-observability.sh
+      - name: Vérifier une panne du Collector sans interrompre le métier
+        run: bash scripts/verify-observability-collector.sh
       - name: Conserver le diagnostic
         if: always()
         run: |
