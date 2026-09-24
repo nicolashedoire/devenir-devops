@@ -5,6 +5,10 @@ import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 const exec = promisify(execFile);
 const repo = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
+// Branche de vérification du lecteur : maintenance TLS après l'initialisation.
+await exec(process.execPath, ['scripts/verify-tls-renewal.mjs'], {
+  cwd: repo, timeout: 600000, maxBuffer: 2 * 1024 * 1024
+});
 const results = [];
 const started = new Date().toISOString();
 let status = 'succes';
