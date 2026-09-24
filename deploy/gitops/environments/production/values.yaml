@@ -1,7 +1,7 @@
 # La promotion change l’empreinte ; elle ne reconstruit pas l’image.
 image:
   repository: ghcr.io/nicolashedoire/devenir-devops
-  digest: sha256:12ea642202176da67ad6f4244f8ec01840db11b0a883ca39304a281c2d749d63
+  digest: sha256:bf5a8ddbeddf5eeedfba3194b7743120640f341c87173978e297709a288b4977
 replicaCount: 2
 database:
   existingSecret: taskboard-db
