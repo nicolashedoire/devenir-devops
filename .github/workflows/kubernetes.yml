@@ -30,6 +30,8 @@ jobs:
           for ns in taskboard-lab taskboard-recette taskboard-production; do
             node scripts/kube-lab.mjs import --witness preuves/tache-temoin.json --namespace "$ns"
           done
+      - name: Provoquer un échec Helm et retrouver l’image précédente
+        run: node scripts/verify-helm-rollback.mjs preuves/tache-temoin.json
       - name: Adopter les ressources dans Argo CD
         run: |
           node scripts/gitops-lab.mjs install
