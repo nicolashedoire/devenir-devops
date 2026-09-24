@@ -1,0 +1,58 @@
+name: devenir-devops
+
+# Identifiants publics de laboratoire ; ne pas réutiliser pour un service exposé.
+x-app: &app
+  build:
+    context: .
+    args:
+      APP_VERSION: ${APP_VERSION:-0.2.0}
+      APP_REVISION: ${APP_REVISION:-local}
+  image: taskboard:lab
+  init: true
+  read_only: true
+  cap_drop: [ALL]
+  security_opt: [no-new-privileges:true]
+
+services:
+  db:
+    image: postgres:17@sha256:f4c66b820c6f974249089d3d16d86a3698eae11e8746eb6644b2271031e91232
+    environment:
+      POSTGRES_USER: taskboard
+      POSTGRES_DB: taskboard
+      POSTGRES_PASSWORD: lab-only-change-me
+    volumes:
+      - taskboard-data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U taskboard -d taskboard"]
+      interval: 3s
+      timeout: 2s
+      retries: 20
+  migrate:
+    <<: *app
+    command: ["node", "scripts/migrate.mjs"]
+    environment:
+      DATABASE_URL: postgres://taskboard:lab-only-change-me@db:5432/taskboard
+    depends_on:
+      db:
+        condition: service_healthy
+    restart: "no"
+  api:
+    <<: *app
+    ports:
+      - "127.0.0.1:${TASKBOARD_PORT:-3000}:3000"
+    environment:
+      DATABASE_URL: postgres://taskboard:lab-only-change-me@db:5432/taskboard
+      HOST: 0.0.0.0
+      PORT: "3000"
+    depends_on:
+      migrate:
+        condition: service_completed_successfully
+    healthcheck:
+      test: ["CMD", "node", "-e", "fetch('http://127.0.0.1:3000/readyz').then(r=>{if(!r.ok)process.exit(1)}).catch(()=>process.exit(1))"]
+      interval: 3s
+      timeout: 3s
+      retries: 20
+      start_period: 5s
+    stop_grace_period: 15s
+volumes:
+  taskboard-data:

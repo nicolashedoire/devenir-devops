@@ -1,0 +1,27 @@
+name: Signaler une difficulté dans un atelier
+description: Aider à reproduire un blocage ou corriger une explication.
+title: "[Atelier] "
+body:
+  - type: input
+    id: jalon
+    attributes:
+      label: Jalon et version du dépôt
+      description: Numéro du jalon, tag ou identifiant du commit.
+    validations:
+      required: true
+  - type: textarea
+    id: environnement
+    attributes:
+      label: Environnement
+      description: Système et versions des outils ; résultat de npm run doctor si possible.
+  - type: textarea
+    id: reproduction
+    attributes:
+      label: Étapes et résultat observé
+      description: Commandes utiles, résultat attendu et message exact. Retirer mots de passe, jetons et données personnelles.
+    validations:
+      required: true
+  - type: textarea
+    id: tentative
+    attributes:
+      label: Diagnostic déjà tenté

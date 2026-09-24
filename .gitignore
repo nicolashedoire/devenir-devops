@@ -1,0 +1,17 @@
+node_modules/
+.env*
+!.env.example
+backups/
+preuves/
+*.dump
+*.log
+coverage/
+work/
+.DS_Store
+*.tfstate*
+.terraform/
+*.tfplan
+*.pem
+*.key
+image-validation/
+preuves-publication/
