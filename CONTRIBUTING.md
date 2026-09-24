@@ -22,4 +22,4 @@ Les README, guides, questions, incidents, corrigés et explications sont rédig�
 
 Les observations personnelles vont dans `preuves/`, les sauvegardes dans `backups/`. Ces dossiers sont ignorés par Git. `docs/validation.md` est consolidé par le mainteneur à partir de résultats identifiables. Une copie du résultat attendu n’est pas une preuve d’exécution.
 
-La publication d’image est une action manuelle réservée à la branche principale, après réussite des contrôles. Le manuscrit et ses fichiers de fabrication ne doivent pas entrer dans ce dépôt. Le choix d’une licence appartient au mainteneur ; n’ajoutez pas une licence dans le cadre d’un exercice.
+La publication d’image est une action manuelle réservée à la branche principale, après réussite des contrôles. Le manuscrit et ses fichiers de fabrication ne doivent pas entrer dans ce dépôt. Le compagnon est distribué sous licence MIT ; les contributions doivent pouvoir être distribuées sous cette même licence. Le manuscrit, la couverture et les illustrations du livre restent exclus. Consultez [le périmètre de la licence](docs/licence.md).

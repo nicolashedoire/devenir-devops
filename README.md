@@ -71,3 +71,7 @@ L’application ne fournit pas de comptes utilisateur individuels. Le laboratoir
 - `archive/legacy/` : anciens exemples, hors parcours actif.
 
 Pour une erreur du livre ou du code, ouvrez une [issue](https://github.com/nicolashedoire/devenir-devops/issues) en indiquant le chapitre ou jalon, le tag, votre système, la commande, le résultat attendu et l’observation réelle. Retirez secrets et données personnelles. Les [conventions](docs/conventions.md), le [glossaire](docs/glossaire.md) et [CONTRIBUTING.md](CONTRIBUTING.md) complètent cette démarche. Les changements sont consignés dans [CHANGELOG.md](CHANGELOG.md).
+
+## Licence
+
+Le code, les configurations et les guides du compagnon sont sous [licence MIT](LICENSE). Le manuscrit, la couverture et les illustrations du livre restent exclus. Voir [le périmètre en français](docs/licence.md).
