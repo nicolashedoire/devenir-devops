@@ -18,7 +18,7 @@ for (const signal of ['SIGINT', 'SIGTERM']) process.once(signal, () => { interru
 const save = () => writeFile(join(directory, 'resultat.json'), JSON.stringify(record, null, 2) + '\n', {mode:0o600});
 async function dc(...args) {
   return (await exec(docker, ['compose', '-p', 'taskboard-observabilite', '-f',
-    'observabilite/compose.yaml', ...args], {timeout:45000, maxBuffer:1024*1024})).stdout;
+    'observabilite/compose.yaml', ...args], {timeout:180000, maxBuffer:1024*1024})).stdout;
 }
 async function get(url) {
   const response = await fetch(url, {signal:AbortSignal.timeout(5000), headers:{Accept:'application/json'}});
@@ -53,8 +53,11 @@ async function request() {
   assert.ok(requestId);
   return {status:200, temoin_identique:true, trace_id:traceId, request_id:requestId};
 }
-async function prom(query) {
-  const json = await (await get('http://127.0.0.1:9090/api/v1/query?query=' + encodeURIComponent(query))).json();
+async function prom(query, time) {
+  const url = new URL('http://127.0.0.1:9090/api/v1/query');
+  url.searchParams.set('query', query);
+  if (time !== undefined) url.searchParams.set('time', String(time));
+  const json = await (await get(url)).json();
   assert.equal(json.status, 'success');
   return json.data.result;
 }
@@ -100,6 +103,62 @@ async function correlated(evidence) {
   assert.equal(log.span_id, hex(http.spanId));
   return {trace_recue:true, journal_recu:true, parentage_http_sql:true};
 }
+async function volumeIdentities() {
+  const config = JSON.parse(await dc('config', '--format', 'json'));
+  const names = Object.values(config.volumes).map(item => item.name).sort();
+  assert.equal(names.length, 5, 'Les cinq volumes du laboratoire sont attendus.');
+  const values = JSON.parse((await exec(docker, ['volume', 'inspect', ...names],
+    {timeout:15000, maxBuffer:1024*1024})).stdout);
+  for (const value of values) {
+    assert.equal(value.Labels['com.docker.compose.project'], 'taskboard-observabilite');
+  }
+  return values.map(value => ({nom:value.Name, cree_a:value.CreatedAt, pilote:value.Driver}))
+    .sort((a,b) => a.nom.localeCompare(b.nom));
+}
+async function wholeStackRestart() {
+  // Une requête datée avant le retrait doit rester consultable après recréation.
+  const historicalTime = Date.now() / 1000;
+  const historical = await prom(countQuery, historicalTime);
+  assert.equal(historical.length, 1);
+  assert.ok(Number.isFinite(Number(historical[0].value[1])));
+  const beforeVolumes = await volumeIdentities();
+  const oldEvidence = record.apres;
+  record.reprise_pile = {statut:'en_cours', mesure_a:historicalTime,
+    metrique_avant:historical[0].value, volumes_avant:beforeVolumes};
+  let downError;
+  try {
+    console.log('Pause du seul projet d’observation, sans supprimer ses volumes.');
+    await dc('down');
+    assert.equal((await dc('ps', '-a', '-q')).trim(), '', 'Tous les conteneurs du projet doivent être retirés.');
+    assert.deepEqual(await volumeIdentities(), beforeVolumes, 'Les volumes doivent subsister après down.');
+    record.reprise_pile.conteneurs_retires = true;
+  } catch (error) { downError = error; }
+  finally {
+    // Même si un contrôle échoue, tenter de reprendre ce seul laboratoire.
+    await dc('up', '-d', '--no-build');
+    const endpoints = [
+      'http://127.0.0.1:3010/readyz', 'http://127.0.0.1:3011/readyz',
+      'http://127.0.0.1:3012/readyz', 'http://127.0.0.1:13133/',
+      'http://127.0.0.1:9090/-/ready', 'http://127.0.0.1:3100/ready',
+      'http://127.0.0.1:3200/ready', 'http://127.0.0.1:3300/api/health',
+    ];
+    await Promise.all(endpoints.map(url => waitFor('Reprise de la pile',
+      () => get(url), 120000, true)));
+    record.reprise_pile.services_repris = true;
+  }
+  if (downError) throw downError;
+  assert.deepEqual(await volumeIdentities(), beforeVolumes, 'Les mêmes volumes doivent être réutilisés.');
+  const after = await prom(countQuery, historicalTime);
+  assert.deepEqual(after, historical, 'La mesure historique doit subsister après reprise.');
+  const persisted = await correlated(oldEvidence);
+  const current = await request();
+  Object.assign(current, await correlated(current));
+  Object.assign(record.reprise_pile, {statut:'valide', volumes_identiques:true,
+    metrique_historique_identique:true, metrique_apres:after[0].value,
+    trace_et_journal_anterieurs_conserves:persisted.trace_recue && persisted.journal_recu,
+    temoin_identique:true, nouvelle_requete:current,
+    limite:'Arrêt ordinaire et reprise sur le même hôte ; ne prouve pas une reprise après perte de disque.'});
+}
 try {
   assert.equal((await collector()).running, true, 'Démarrer et valider la stack avant cette panne.');
   await get('http://127.0.0.1:13133/');
@@ -143,8 +202,9 @@ try {
     if (interrupted) throw Error('Exercice interrompu après reprise.');
     record.apres = await request();
     Object.assign(record.apres, await correlated(record.apres));
+    await wholeStackRestart();
     record.statut = 'valide';
-    console.log('Validé : lecture et métriques pendant l’arrêt, exports repris après redémarrage.');
+    console.log('Validé : panne Collector, reprise complète, témoin et signaux antérieurs conservés.');
   }
 } catch (error) { record.statut = 'echec'; record.erreur = error.message; }
 await save();

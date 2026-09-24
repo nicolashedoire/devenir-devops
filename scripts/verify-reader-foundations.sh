@@ -39,7 +39,7 @@ cleanup() {
   # Aucun volume n’est supprimé ; le runner jetable libère ses propres disques à sa fin.
 }
 trap cleanup EXIT
-health() { curl --fail --retry 30 --retry-connrefused --retry-delay 1 --max-time 3 "http://127.0.0.1:$1/${2:-healthz}"; }
+health() { curl --fail --retry 30 --retry-all-errors --retry-delay 1 --max-time 3 "http://127.0.0.1:$1/${2:-healthz}"; }
 post() { curl -fsS -H 'Content-Type: application/json' -d '{"title":"preuve-parcours-devops"}' "http://127.0.0.1:$1/api/tasks"; }
 free_ports() { node --input-type=module - "$@" <<'JS'
 import net from 'node:net';for(const port of process.argv.slice(2)){await new Promise((res,rej)=>{const s=net.createServer();s.once('error',rej);s.listen(+port,'127.0.0.1',()=>s.close(res));});}
@@ -213,7 +213,7 @@ JS
       set -euo pipefail
       trap 'docker rm -f taskboard-ci >/dev/null 2>&1 || true' EXIT
       docker run -d --name taskboard-ci -p 127.0.0.1:3003:3000 taskboard:ci
-      curl --fail --retry 3 --retry-connrefused --retry-delay 1 --max-time 2 "http://127.0.0.1:$port/healthz"
+      curl --fail --retry 3 --retry-all-errors --retry-delay 1 --max-time 2 "http://127.0.0.1:$port/healthz"
     ); then result=0; else result=$?; fi
     if [[ $port == 3999 ]]; then [[ $result != 0 ]]; else [[ $result == 0 ]]; fi
     if docker inspect taskboard-ci >/dev/null 2>&1; then echo 'Nettoyage incomplet'; exit 1; fi

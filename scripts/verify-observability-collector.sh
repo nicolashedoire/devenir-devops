@@ -19,4 +19,4 @@ collect() {
 trap collect EXIT
 export DOCKER_BIN
 "$NODE_BIN" observabilite/verification-collector.mjs "$run_dir"
-echo "Panne de collecte vérifiée et Collector repris. Preuves : $run_dir"
+echo "Panne Collector et reprise complète vérifiées, volumes conservés. Preuves : $run_dir"
