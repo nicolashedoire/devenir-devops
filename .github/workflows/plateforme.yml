@@ -1,0 +1,37 @@
+name: Vérifier la plateforme locale et MCP
+on:
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  plateforme:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    defaults:
+      run:
+        shell: bash
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020
+        with:
+          node-version-file: .node-version
+      - name: Tester les limites et refus de la plateforme et du serveur MCP
+        run: node --test scripts/platform/platform.test.mjs scripts/mcp/mcp.test.mjs
+      - name: Créer les données source
+        run: |
+          bash scripts/verify-compose.sh
+          node --input-type=module -e "import fs from 'node:fs';const dirs=fs.readdirSync('preuves').filter(n=>n.startsWith('verify-compose-')).sort();fs.copyFileSync('preuves/'+dirs.at(-1)+'/tache-temoin.json','preuves/tache-temoin.json');"
+      - name: Livrer le modèle sans reconstruire et relire la preuve par MCP
+        run: node scripts/verify-platform-delivery.mjs
+      - name: Conserver les preuves expurgées
+        if: always()
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
+        with:
+          name: plateforme-mcp
+          path: preuves/**/resultat.json
+          retention-days: 30
+      - name: Arrêter le laboratoire de cette exécution
+        if: always()
+        run: docker compose down
