@@ -1,0 +1,43 @@
+name: Vérifier sécurité, alertes et restauration
+on:
+  workflow_dispatch:
+permissions:
+  contents: read
+defaults:
+  run:
+    shell: bash
+jobs:
+  recette-locale:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 25
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
+        with:
+          node-version-file: .node-version
+      - name: Tester les frontières de la passerelle
+        run: node --test operations/gateway.test.mjs
+      - name: Créer la source et sa tâche témoin
+        run: |
+          bash scripts/verify-compose.sh
+          node --input-type=module -e "import fs from 'node:fs';const dirs=fs.readdirSync('preuves').filter(n=>n.startsWith('verify-compose-')).sort();fs.copyFileSync('preuves/'+dirs.at(-1)+'/tache-temoin.json','preuves/tache-temoin.json');"
+      - name: Restaurer dans une cible distincte et protéger les accès
+        run: node operations/lab.mjs init --witness preuves/tache-temoin.json
+      - name: Vérifier rotation, indicateurs, restauration et réception des alertes
+        run: node operations/recette.mjs
+      - name: Conserver uniquement les preuves expurgées
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        if: always()
+        with:
+          name: operations-reprise
+          path: |
+            preuves/operations-*/resultat.json
+            preuves/recette-locale-*/resultat.json
+          retention-days: 30
+      - name: Arrêter les environnements de cette exécution
+        if: always()
+        run: |
+          if test -f work/operations/lab.env; then node operations/lab.mjs down; fi
+          docker compose down
