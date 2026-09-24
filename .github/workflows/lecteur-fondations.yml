@@ -1,0 +1,43 @@
+name: Rejouer les exercices des fondations
+on:
+  workflow_dispatch:
+permissions:
+  contents: read
+defaults:
+  run:
+    shell: bash
+jobs:
+  lecteur:
+    name: Exercices ${{ matrix.mode }}
+    runs-on: ubuntu-24.04
+    timeout-minutes: 20
+    strategy:
+      fail-fast: false
+      matrix:
+        mode: [linux, docker, infra]
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020
+        with:
+          node-version-file: .node-version
+      - name: Préparer Linux sur le runner jetable
+        if: matrix.mode == 'linux'
+        run: |
+          sudo apt-get update -qq
+          sudo apt-get install -y nginx
+          sudo systemctl stop nginx
+          sudo loginctl enable-linger "$(whoami)"
+          sudo systemctl start "user@$(id -u).service"
+          printf 'XDG_RUNTIME_DIR=/run/user/%s\n' "$(id -u)" >> "$GITHUB_ENV"
+          printf 'DBUS_SESSION_BUS_ADDRESS=unix:path=/run/user/%s/bus\n' "$(id -u)" >> "$GITHUB_ENV"
+      - name: Exécuter les manipulations dans une copie isolée
+        run: bash scripts/verify-reader-foundations.sh "$GITHUB_WORKSPACE" "${{ matrix.mode }}"
+      - name: Conserver résultats et sorties des exercices
+        if: always()
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
+        with:
+          name: lecteur-fondations-${{ matrix.mode }}
+          path: recette-lecteur-preuves/
+          retention-days: 30
