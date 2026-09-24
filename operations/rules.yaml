@@ -1,0 +1,13 @@
+groups:
+  - name: taskboard-laboratoire
+    rules:
+      - alert: TaskboardLectureIndisponible
+        expr: |
+          sum(rate(taskboard_http_requests_total{route="/api/tasks",method="GET",status=~"5.."}[30s]))
+          /
+          sum(rate(taskboard_http_requests_total{route="/api/tasks",method="GET"}[30s])) > 0.2
+        for: 10s
+        labels:
+          severity: exercice
+        annotations:
+          summary: Plus de 20 % d'erreurs sur les lectures du laboratoire

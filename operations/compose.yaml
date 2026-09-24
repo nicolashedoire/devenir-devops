@@ -1,0 +1,73 @@
+name: taskboard-operations
+services:
+  db:
+    image: postgres:17.11@sha256:f4c66b820c6f974249089d3d16d86a3698eae11e8746eb6644b2271031e91232
+    environment:
+      POSTGRES_USER: taskboard_admin
+      POSTGRES_DB: taskboard
+      POSTGRES_PASSWORD: ${DB_ADMIN_PASSWORD:?Initialiser le laboratoire opérations}
+    volumes:
+      - data:/var/lib/postgresql/data
+    healthcheck:
+      test: [CMD-SHELL, pg_isready -U taskboard_admin -d taskboard]
+      interval: 2s
+      timeout: 2s
+      retries: 40
+    networks: [private]
+  migrate:
+    image: ${TASKBOARD_IMAGE:?Image au digest requise}
+    command: [node, scripts/migrate.mjs]
+    environment:
+      DATABASE_URL: ${MIGRATION_DATABASE_URL:?Connexion migration requise}
+    networks: [private]
+    profiles: [maintenance]
+  api:
+    image: ${TASKBOARD_IMAGE:?Image au digest requise}
+    environment:
+      DATABASE_URL: ${RUNTIME_DATABASE_URL:?Connexion applicative requise}
+      HOST: 0.0.0.0
+      PORT: "3000"
+      FAULT_MODE: "off"
+    depends_on:
+      db:
+        condition: service_healthy
+    read_only: true
+    security_opt: [no-new-privileges:true]
+    cap_drop: [ALL]
+    networks: [private]
+  gateway:
+    image: ${TASKBOARD_IMAGE:?Image au digest requise}
+    command: [node, /operations/gateway.mjs]
+    volumes:
+      - ./operations/gateway.mjs:/operations/gateway.mjs:ro
+      - ./work/operations/security/runtime:/run/taskboard:ro
+    ports: ["127.0.0.1:3443:3443"]
+    depends_on: [api]
+    read_only: true
+    security_opt: [no-new-privileges:true]
+    cap_drop: [ALL]
+    networks: [private, entry]
+  prometheus:
+    image: prom/prometheus:v3.14.0@sha256:5ce7540c3c00ef4ab0c9d2c995c6a5b9c421f44b4a115d97a2c7af3b1c21cbb0
+    volumes:
+      - ./operations/prometheus.yaml:/etc/prometheus/prometheus.yml:ro
+      - ./operations/rules.yaml:/etc/prometheus/rules.yaml:ro
+    networks: [private]
+  alertmanager:
+    image: prom/alertmanager:v0.34.1@sha256:e9733bafb1bdef9b00e25a21f8f99dc26a22224bf16641ad754d1649f4c3357a
+    command: [--config.file=/etc/alertmanager/alertmanager.yaml, --cluster.listen-address=]
+    volumes:
+      - ./operations/alertmanager.yaml:/etc/alertmanager/alertmanager.yaml:ro
+    networks: [private]
+  receiver:
+    image: ${TASKBOARD_IMAGE:?Image au digest requise}
+    command: [node, /operations/receiver.mjs]
+    volumes:
+      - ./operations/receiver.mjs:/operations/receiver.mjs:ro
+    networks: [private]
+volumes:
+  data:
+networks:
+  private:
+    internal: true
+  entry:

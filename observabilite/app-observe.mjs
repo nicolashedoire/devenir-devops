@@ -18,8 +18,8 @@ const sdk = new NodeSDK({
     'service.version': '0.2.0', 'deployment.environment.name': 'laboratoire',
     'taskboard.scenario': scenario }),
   traceExporter: new OTLPTraceExporter({ url: endpoint + '/v1/traces' }),
-  logRecordProcessors: [new BatchLogRecordProcessor(
-    new OTLPLogExporter({ url: endpoint + '/v1/logs' }), { scheduledDelayMillis: 1000 })],
+  logRecordProcessors: [new BatchLogRecordProcessor({
+    exporter: new OTLPLogExporter({ url: endpoint + '/v1/logs' }), scheduledDelayMillis: 1000 })],
 });
 sdk.start();
 const tracer = trace.getTracer('taskboard-observabilite', '0.1.0');
