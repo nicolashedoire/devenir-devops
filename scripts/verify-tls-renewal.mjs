@@ -1,6 +1,6 @@
 // Contrôle d'intégration sur runner éphémère : aucune modification de l'application.
 import { execFileSync } from 'node:child_process';
-import { readFile, mkdir, copyFile, readdir, stat } from 'node:fs/promises';
+import { readFile, mkdir, readdir, stat } from 'node:fs/promises';
 import { writeFile } from 'node:fs/promises';
 import { createHash, X509Certificate } from 'node:crypto';
 import assert from 'node:assert/strict';
@@ -87,8 +87,9 @@ try {
  current='retour aux certificats encore valides';
  // Le cinquième bloc a vérifié leur validité ; la fixture vient d'être initialisée.
  dc(['stop','gateway']);
- await copyFile(path.join(stage,'ca-avant.crt'),path.join(security,'ca.crt'));
- await copyFile(path.join(stage,'server-avant.crt'),path.join(runtime,'server.crt'));
+ run('install',['-m','600',path.join(stage,'ca-avant.crt'),path.join(security,'ca.crt')]);
+ run('install',['-m','644',path.join(stage,'server-avant.crt'),path.join(runtime,'server.crt')]);
+ assert.equal((await stat(path.join(runtime,'server.crt'))).mode&0o777,0o644);
  dc(['up','-d','--no-deps','gateway']);
  run(process.execPath,['operations/lab.mjs','verify']);
  const observedRollback=await observeCertificate();
@@ -96,8 +97,9 @@ try {
  note('retour_conditionnel_ancienne_chaine_valide_et_acces_verifies');
  current='retour final a la chaine renouvelee';
  dc(['stop','gateway']);
- await copyFile(path.join(stage,'ca.crt'),path.join(security,'ca.crt'));
- await copyFile(path.join(stage,'server.crt'),path.join(runtime,'server.crt'));
+ run('install',['-m','600',path.join(stage,'ca.crt'),path.join(security,'ca.crt')]);
+ run('install',['-m','644',path.join(stage,'server.crt'),path.join(runtime,'server.crt')]);
+ assert.equal((await stat(path.join(runtime,'server.crt'))).mode&0o777,0o644);
  dc(['up','-d','--no-deps','gateway']);
  run(process.execPath,['operations/lab.mjs','verify']);
  const final=await observeCertificate();
